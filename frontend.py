@@ -6,7 +6,7 @@ import tkinter.font as font
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from backstage import Request
+from backend import Request
 
 
 class Interface(Request):
@@ -60,6 +60,14 @@ class Interface(Request):
     def __str__(self) -> str:
         return 'This is a interface'
 
+    def init_user_info(self, loginId: str, password: str):
+        path = self.main_path + self.path_list[3] + self.file_type
+        user_info = {
+            'loginId': loginId,
+            'password': password,
+        }
+        self.generate_text(path, user_info)
+
     def check_login_data(self) -> bool or None:
         """登錄功能"""
         path_name = super().main_path + super().path_list[3] + '.txt'
@@ -101,8 +109,11 @@ class Interface(Request):
                 d = eval(f.read())
             return d
         except SyntaxError:
-            #  TypeError
-            messagebox.showerror(title='錯誤', message='SyntaxError: Please backup first.')
+            # SyntaxError: Please backup first.
+            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
+            return []
+        except Exception:
+            messagebox.showerror(title='錯誤', message='Unknown Error.')
             return []
 
 
@@ -258,17 +269,12 @@ def show_login(inter: Interface):
     def create():
         loginId = loginId_entry.get()
         password = password_entry.get()
-        path_name = inter.main_path + inter.path_list[3] + '.txt'
-        user_info = {
-            'loginId': loginId,
-            'password': password,
-        }
-        inter.generate_text(path_name, user_info)
+        inter.init_user_info(loginId, password)
         f = inter.check_login_data()
         if f:
             login_window.destroy()
             show_selection_window(inter)
-        elif not f:
+        else:
             pass
 
     def check():

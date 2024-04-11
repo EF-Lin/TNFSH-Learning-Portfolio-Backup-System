@@ -1,4 +1,4 @@
-from surface import Interface
+from frontend import Interface
 
 if __name__ == '__main__':
     main = Interface()

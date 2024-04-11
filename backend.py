@@ -20,7 +20,7 @@ class Request:
     # info
     main_path = '.\\files'
     path_list = ['\\cadre', '\\course_achievements', '\\performers', '\\user_info']
-    tem_path_list = ['.\\', '\\course_achievements_2', '\\performers_2']
+    tem_path_list = ['', '\\course_achievements_2', '\\performers_2']
     headers = {'user-agent': ''}
     file_list = []
     cadre_ex_list = []
@@ -115,22 +115,28 @@ class Request:
                 self.replace_folder(2)
             return 'S'
         except json.decoder.JSONDecodeError:
-            return f"JSONDecodeError: Backup {name[i]} failed, please try again."
+            # f"JSONDecodeError: Backup {name[i]} failed, please try again."
+            return f"Backup {name[i]} failed, please try again."
+        except FileNotFoundError:
+            return f"{name[i]}.txt is not exist."
         except re.exceptions.ConnectionError:
-            return f'ConnectionError: Backup {name[i]} failed, please check your internet.'
-        except Exception as ex:
-            return str(ex)
+            # f'ConnectionError: Backup {name[i]} failed, please check your internet.'
+            return f'Backup {name[i]} failed, please check your internet.'
+        except Exception:
+            return 'Unknown Error.'
 
     def backup_cadre_ex(self) -> str:
         try:
             asyncio.run(self.cadre_experience())
             return "S"
         except json.decoder.JSONDecodeError:
-            return "JSONDecodeError: Backup cadre experiment failed, please try again."
+            # "JSONDecodeError: Backup cadre experiment failed, please try again."
+            return "Backup cadre experiment failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'ConnectionError: Backup cadre experiment failed, please check your internet.'
-        except Exception as ex:
-            return str(ex)
+            # 'ConnectionError: Backup cadre experiment failed, please check your internet.'
+            return 'Backup cadre experiment failed, please check your internet.'
+        except Exception:
+            return 'Unknown Error.'
 
     def backup_course_ach(self) -> str:
         try:
@@ -141,11 +147,13 @@ class Request:
         except FileNotFoundError:
             return "course_achievement.txt is not exist."
         except json.decoder.JSONDecodeError:
-            return "RequestError: Backup course achievements failed, please try again."
+            # "JSONDecodeError: Backup course achievements failed, please try again."
+            return "Backup course achievements failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'ConnectionError: Backup course achievements failed, please check your internet.'
-        except Exception as ex:
-            return str(ex)
+            # 'ConnectionError: Backup course achievements failed, please check your internet.'
+            return 'Backup course achievements failed, please check your internet.'
+        except Exception:
+            return 'Unknown Error.'
 
     def backup_per(self) -> str:
         try:
@@ -156,11 +164,13 @@ class Request:
         except FileNotFoundError:
             return "FileNotFoundError: Performers.txt is not exist."
         except json.decoder.JSONDecodeError:
-            return "RequestError: Backup performers failed, please try again."
+            # "JSONDecodeError: Backup performers failed, please try again."
+            return "Backup performers failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'ConnectionError: Backup performers failed, please check your internet.'
-        except Exception as ex:
-            return str(ex)
+            # 'ConnectionError: Backup performers failed, please check your internet.'
+            return 'Backup performers failed, please check your internet.'
+        except Exception:
+            return 'Unknown Error.'
 
     def orc(self, img):
         ORC = ddddocr.DdddOcr(show_ad=False)
@@ -312,7 +322,7 @@ class Request:
                 self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
-                with open(self.main_path + self.tem_path_list[1] + f'\\{i["dn"]}', 'wb') as f:
+                with open(self.main_path + self.tem_path_list[1] + f'/{i["dn"]}', 'wb') as f:
                     f.write(byte_io.getvalue())
 
     async def download_per(self):
@@ -326,7 +336,7 @@ class Request:
                 self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
-                path = self.main_path + self.tem_path_list[2] + f"\\{i['certiName']}"
+                path = self.main_path + self.tem_path_list[2] + f"/{i['certiName']}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
 
@@ -340,7 +350,7 @@ class Request:
             shutil.rmtree(path)
             os.rename(tem_path, path)
         else:
-            return FileNotFoundError
+            raise FileNotFoundError
 
 
 if __name__ == '__main__':
@@ -356,4 +366,3 @@ if __name__ == '__main__':
     }
     response = Request(Data)
     s = response.login()
-    #requests.exceptions.ConnectionError
