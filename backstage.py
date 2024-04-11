@@ -66,18 +66,31 @@ class Request:
         for i in self.path_list[0:3]:
             generate_blank_text(self.main_path + i * 2 + self.file_type)
 
+    def delete_all_files(self):
+        for i in self.path_list[0:3]:
+            path = self.main_path + i
+            if os.path.exists(path):
+                shutil.rmtree(path)
+                self.init_folders()
+                self.init_texts()
+            else:
+                pass
+
     def login(self):
         try:
             return self.request_login()
         except re.exceptions.ConnectionError:
-            return 'ConnectionError, please check your internet'
+            return 'ConnectionError: Please check your internet.'
         except Exception as ex:
             return str(ex)
 
     def backup_all(self) -> list:
-        s1 = self.backup_cadre_ex()
-        s2 = self.backup_course_ach()
-        s3 = self.backup_per()
+        # s1 = self.backup_cadre_ex()
+        # s2 = self.backup_course_ach()
+        # s3 = self.backup_per()
+        s1 = self.backup(0)
+        s2 = self.backup(1)
+        s3 = self.backup(2)
         return_list = []
         for i in [s1, s2, s3]:
             if i != "S":
@@ -87,17 +100,37 @@ class Request:
         else:
             return return_list
 
+    def backup(self, i: int) -> str:
+        name = ['cadre experiment', 'course achievements', 'performers']
+        try:
+            if i == 0:
+                asyncio.run(self.cadre_experience())
+            elif i == 1:
+                asyncio.run(self.course_achievement())
+                asyncio.run(self.download_course_ach())
+                self.replace_folder(1)
+            elif i == 2:
+                asyncio.run(self.performers())
+                asyncio.run(self.download_per())
+                self.replace_folder(2)
+            return 'S'
+        except json.decoder.JSONDecodeError:
+            return f"JSONDecodeError: Backup {name[i]} failed, please try again."
+        except re.exceptions.ConnectionError:
+            return f'ConnectionError: Backup {name[i]} failed, please check your internet.'
+        except Exception as ex:
+            return str(ex)
+
     def backup_cadre_ex(self) -> str:
         try:
             asyncio.run(self.cadre_experience())
             return "S"
         except json.decoder.JSONDecodeError:
-            return "Backup cadre experiment failed, problem:RequestError, please try again"
+            return "JSONDecodeError: Backup cadre experiment failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'Backup cadre experiment failed, problem:ConnectionError, please check your internet'
+            return 'ConnectionError: Backup cadre experiment failed, please check your internet.'
         except Exception as ex:
             return str(ex)
-            #return "Oops, backup cadre experiment failed, your computer is about to burn up!!!"
 
     def backup_course_ach(self) -> str:
         try:
@@ -106,14 +139,13 @@ class Request:
             self.replace_folder(1)
             return "S"
         except FileNotFoundError:
-            return "course_achievement.txt is not exist"
+            return "course_achievement.txt is not exist."
         except json.decoder.JSONDecodeError:
-            return "Backup course achievements failed, problem:RequestError, please try again"
+            return "RequestError: Backup course achievements failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'Backup course achievements failed, problem:ConnectionError, please check your internet'
+            return 'ConnectionError: Backup course achievements failed, please check your internet.'
         except Exception as ex:
             return str(ex)
-            #return "Oops, backup course achievements failed, your computer is about to burn up!!!"
 
     def backup_per(self) -> str:
         try:
@@ -122,14 +154,13 @@ class Request:
             self.replace_folder(2)
             return "S"
         except FileNotFoundError:
-            return "performers.txt is not exist"
+            return "FileNotFoundError: Performers.txt is not exist."
         except json.decoder.JSONDecodeError:
-            return "Backup performers failed, problem:RequestError, please try again"
+            return "RequestError: Backup performers failed, please try again."
         except re.exceptions.ConnectionError:
-            return 'Backup performers failed, problem:ConnectionError, please check your internet'
+            return 'ConnectionError: Backup performers failed, please check your internet.'
         except Exception as ex:
             return str(ex)
-            #return "Oops, backup performers failed, your computer is about to crush!!!"
 
     def orc(self, img):
         ORC = ddddocr.DdddOcr(show_ad=False)
@@ -171,7 +202,7 @@ class Request:
             self.key = html[i:j]
             return 'S'
         else:
-            return 'LOGIN ERROR: 帳號、密碼或驗證碼錯誤，請重新登錄'
+            return 'LOGIN ERROR: 帳號、密碼或驗證碼錯誤，請重新登錄。'
 
     def rewrite_text(self, i: int, file):
         if i == 4:
