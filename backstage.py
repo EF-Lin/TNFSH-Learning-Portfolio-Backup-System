@@ -326,7 +326,7 @@ class Request:
                 self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
-                path = self.main_path + self.tem_path_list[2] + f'\\{i['certiName']}'
+                path = self.main_path + self.tem_path_list[2] + f"\\{i['certiName']}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
 
