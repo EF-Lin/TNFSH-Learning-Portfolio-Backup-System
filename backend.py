@@ -18,9 +18,18 @@ import shutil
 class Request:
     """爬資料"""
     # info
-    main_path = '.\\files'
-    path_list = ['\\cadre', '\\course_achievements', '\\performers', '\\user_info']
-    tem_path_list = ['', '\\course_achievements_2', '\\performers_2']
+    # main_path = '.\\files'
+    main_path = os.path.normpath('files')
+    # path_list = ['\\cadre', '\\course_achievements', '\\performers', '\\user_info']
+    path_list = []
+    p = ['/cadre', '/course_achievements', '/performers', '/user_info']
+    for i in p:
+        path_list.append(os.path.normpath(i))
+    # tem_path_list = ['', '/course_achievements_2', '/performers_2']
+    p = ['', '/course_achievements_2', '/performers_2']
+    tem_path_list = []
+    for i in p[1:len(p)]:
+        tem_path_list.append(os.path.normpath(i))
     headers = {'user-agent': ''}
     file_list = []
     cadre_ex_list = []
