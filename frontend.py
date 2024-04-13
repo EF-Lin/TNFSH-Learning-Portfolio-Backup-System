@@ -123,10 +123,10 @@ class Tree:
     inter: Interface
     window: tk.Toplevel
     i: int
-    tree: ttk.Treeview = None
     data: list = None
 
     def __post_init__(self):
+        self.tree: ttk.Treeview
         if self.i == 0:
             self.cols = self.inter.cadre_cols
         elif self.i == 1:
