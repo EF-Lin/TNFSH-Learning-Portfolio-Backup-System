@@ -297,60 +297,6 @@ def show_per(inter: Interface):
     per_window.mainloop()
 
 
-"""
-def show_covert_img(inter: Interface):
-    def select_images(frame):
-        global files
-        global img_size
-        files = filedialog.askopenfilenames(parent=show_covert_img_window, title='請選擇圖片',
-                                            filetypes=[('image files', '.png;.jpg;.jpge')])
-        frame.pack_forget()
-        frame = tk.Frame(show_covert_img_window)
-        img_size = [tk.IntVar() for _ in range(len(files))]
-        for i in range(len(img_size)):
-            img_size[i].set(10)
-        for i in range(len(files)):
-            quality_scale = tk.Scale(frame, from_=0, to=10, orient='horizontal',
-                                     variable=img_size[i], length=150)
-            quality_scale.pack()
-            quality_label = tk.Label(frame, text=files[i])
-            quality_label.pack()
-        frame.pack()
-
-    def covert_img():
-        if file_name.get() == '':
-            messagebox.showerror(title='錯誤', message='請輸入檔案名稱。')
-        else:
-            covert_successful = inter.covert_image_to_pdf(files=files, name=file_name.get(), size=img_size)
-            if covert_successful:
-                # messagebox.showinfo(title='訊息', message='轉換成功')
-                os.startfile(inter.main_path)
-            else:
-                messagebox.showerror(title='錯誤', message='轉換失敗。')
-
-    show_covert_img_window = tk.Toplevel()
-    show_covert_img_window.title("Image To pdf")
-    show_covert_img_window.geometry('300x400')
-    frame = tk.Frame(show_covert_img_window)
-    frame.pack()
-    select_button = tk.Button(show_covert_img_window, text='選擇圖片', command=lambda: select_images(frame))
-    select_button.pack()
-    img_name = tk.StringVar()
-    img_name.set('None')
-    select_label = tk.Label(show_covert_img_window, textvariable=img_name)
-    select_label.pack()
-    file_name = tk.StringVar()
-    file_name.set('file')
-    name_entry = tk.Entry(show_covert_img_window, textvariable=file_name)
-    name_entry.pack()
-    name_label = tk.Label(show_covert_img_window, text='pdf檔案名稱')
-    name_label.pack()
-
-    covert_button = tk.Button(show_covert_img_window, text='轉換', command=covert_img)
-    covert_button.pack()
-    show_covert_img_window.mainloop()
-"""
-
 def show_anno(inter: Interface):
     successful, data = inter.announcement()
     text = ''
@@ -366,16 +312,10 @@ def show_anno(inter: Interface):
         j = 0
         for i in range(len(announcement)):
             text += f'{announcement[i]} {date[j]} {date[j + 1]}\n'
-            #anno_label = tk.Label(anno_window, text=f'{announcement[i]} {date[j]} {date[j+1]}')
-            #anno_label.pack()
             if not deadline[j+1]:
                 text += '時間截止，你死了!\n\n'
-                #dead_line_label = tk.Label(anno_window, text='時間截止，你死了!')
-                #dead_line_label.pack()
             else:
                 text += f'距離時間截止還剩下{deadline[j+1]}天，趕快去做事，懶骨頭。\n\n'
-                #dead_line_label = tk.Label(anno_window, text=f'距離時間截止還剩下{deadline[j]}天，趕快去做事，懶骨頭。')
-                #dead_line_label.pack()
             j += 2
         anno_label = tk.Label(anno_window, text=text, font=f_text)
         anno_label.pack()

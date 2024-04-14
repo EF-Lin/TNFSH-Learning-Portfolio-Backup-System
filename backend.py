@@ -14,11 +14,6 @@ from datetime import datetime
 import time
 
 
-#from dataclasses import dataclass
-# import urllib.request as req
-# import urllib.parse as par
-
-
 class Request:
     """爬資料"""
     # info
