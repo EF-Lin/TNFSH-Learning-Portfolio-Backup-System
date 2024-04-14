@@ -1,5 +1,6 @@
 import asyncio
 import io
+import bs4
 import requests as re
 from bs4 import BeautifulSoup as bs
 import ddddocr
@@ -8,6 +9,9 @@ import json
 import os
 from fake_useragent import UserAgent
 import shutil
+from PIL import Image
+from datetime import datetime
+import time
 
 
 #from dataclasses import dataclass
@@ -87,11 +91,20 @@ class Request:
 
     def login(self):
         try:
-            return self.request_login()
+            return self.req_login()
         except re.exceptions.ConnectionError:
             return 'ConnectionError: Please check your internet.'
         except Exception as ex:
             return str(ex)
+
+    def announcement(self) -> [bool, list, list, list] or [bool, str]:
+        try:
+            a, b, c = self.req_announcement()
+            return True, [a, b, c]
+        except re.exceptions.ConnectionError:
+            return False, 'Please check your internet.'
+        except Exception:
+            return False, 'Unknown Error.'
 
     def backup_all(self) -> list:
         # s1 = self.backup_cadre_ex()
@@ -189,7 +202,7 @@ class Request:
         ua = UserAgent()
         self.headers['user-agent'] = ua.random
 
-    def request_login(self):
+    def req_login(self):
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # new session
         self.session_requests = re.session()
@@ -251,7 +264,7 @@ class Request:
             self.file_list = json.loads(response.text)['list']
             self.rewrite_text(i, self.file_list)
 
-    async def request_file_list(self):
+    async def req_file_list(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentFiles.do'
         data = {
             'page': '1',
@@ -361,6 +374,61 @@ class Request:
         else:
             raise FileNotFoundError
 
+    def covert_image_to_pdf(self, files: tuple, name: str, size: list):
+        try:
+            img = [
+                Image.open(f)
+                for f in files
+            ]
+            for i in range(len(img)):
+                w, h = img[i].size
+                img[i].thumbnail((int(w * size[i] / 10), int(h * size[i] / 10)))
+            pdf_path = os.path.normpath(self.main_path + f"/{name}.pdf")
+            img[0].save(
+                pdf_path, "PDF",
+                save_all=True,
+                append_images=img[1:],
+                resolution=100.0
+            )
+            return True
+        except Exception as ex:
+            print(ex)
+            # IOError or Exception
+            return False
+
+    def req_announcement(self) -> [list, list, list]:
+        url = 'https://epf-mlife.k12ea.gov.tw/student.do'
+        self.generate_header()
+        response = self.session_requests.post(
+            url=url,
+            headers=self.headers,
+            data={
+                'session_key': self.key,
+                'model': '2'
+            }
+        )
+        soup = bs4.BeautifulSoup(response.text, 'html.parser')
+        s = str(soup.find(class_='tab-pane fade in active').text).split('\n')
+        announcement = []
+        date = []
+        deadline = []
+        now = datetime.fromtimestamp(time.time())
+        for i in range(len(s)):
+            if s[i] != '':
+                n = "".join(s[i].split())
+                i = n.find('間')
+                announcement.append(n[:i + 1])
+                for j in n[i + 1:].split('~'):
+                    t = datetime.strptime(j, '%Y/%m/%d%H:%S')
+                    date.append(str(t.date()))
+                    if int((t - now).days) > 0:
+                        deadline.append(int((t - now).days))
+                    else:
+                        deadline.append(False)
+            else:
+                pass
+        return announcement, date, deadline
+
 
 if __name__ == '__main__':
     loginId = str(input('請輸入帳號'))
@@ -375,3 +443,4 @@ if __name__ == '__main__':
     }
     response = Request(Data)
     s = response.login()
+    response.req_announcement()
