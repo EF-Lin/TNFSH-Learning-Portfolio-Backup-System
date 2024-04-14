@@ -1,10 +1,8 @@
-import tkinter.font
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import filedialog
-import tkinter.font as font
 import tkinter.ttk as ttk
 import pyperclip
 import os
@@ -223,6 +221,8 @@ class Covert:
         name_entry.pack()
         covert_button = tk.Button(self.show_covert_img_window, text='轉換', command=self.covert_img)
         covert_button.pack()
+        developer_label = tk.Label(self.show_covert_img_window, text='Developed by EFLin')
+        developer_label.pack(side='bottom', anchor='e')
         self.show_covert_img_window.mainloop()
 
     def select_images(self):
@@ -264,30 +264,36 @@ class Covert:
 def show_cadre_ex(inter: Interface):
     cadre_window = tk.Toplevel()
     cadre_window.title('幹部經歷')
-    cadre_window.geometry('600x300')
+    cadre_window.geometry('600x350')
     cadre_tree = Tree(inter=inter, window=cadre_window, i=0)
     backup_cadre_button = tk.Button(cadre_window, text='備份幹部經歷', command=cadre_tree.rebuild_tree)
     backup_cadre_button.pack()
+    developer_label = tk.Label(cadre_window, text='Developed by EFLin')
+    developer_label.pack(side='bottom', anchor='e')
     cadre_window.mainloop()
 
 
 def show_course_ach(inter: Interface):
     course_ach_window = tk.Toplevel()
     course_ach_window.title('課程學習成果')
-    course_ach_window.geometry('600x300')
+    course_ach_window.geometry('600x350')
     course_ach_tree = Tree(inter=inter, window=course_ach_window, i=1)
     backup__course_ach_button = tk.Button(course_ach_window, text='備份課程學習成果', command=course_ach_tree.rebuild_tree)
     backup__course_ach_button.pack()
+    developer_label = tk.Label(course_ach_window, text='Developed by EFLin')
+    developer_label.pack(side='bottom', anchor='e')
     course_ach_window.mainloop()
 
 
 def show_per(inter: Interface):
     per_window = tk.Toplevel()
     per_window.title('多元表現')
-    per_window.geometry('600x300')
+    per_window.geometry('600x350')
     per_tree = Tree(inter=inter, window=per_window, i=2)
     backup_per_button = tk.Button(per_window, text='備份多元表現', command=per_tree.rebuild_tree)
     backup_per_button.pack()
+    developer_label = tk.Label(per_window, text='Developed by EFLin')
+    developer_label.pack(side='bottom', anchor='e')
     per_window.mainloop()
 
 
@@ -373,6 +379,8 @@ def show_anno(inter: Interface):
             j += 2
         anno_label = tk.Label(anno_window, text=text, font=f_text)
         anno_label.pack()
+        developer_label = tk.Label(anno_window, text='Developed by EFLin')
+        developer_label.pack(side='bottom', anchor='e')
         anno_window.mainloop()
     else:
         messagebox.showerror(title='錯誤', message=data)
@@ -415,31 +423,34 @@ def show_selection_window(inter: Interface):
     h = 3
     f = 'Microsoft_JhengHei 15'
     covert = Covert(inter)
-
+    announcement_button = tk.Button(selection_window, text='公告', font=f, command=lambda :show_anno(inter),
+                                    width=w, height=h)
+    announcement_button.grid(row=0, column=0, sticky='se')
     cadre_button = tk.Button(selection_window, text='幹部經歷', font=f, command=lambda: show_cadre_ex(inter),
                              width=w, height=h)
-    cadre_button.grid(row=0, column=0, sticky='se')
+    cadre_button.grid(row=0, column=1, sticky='sw')
     course_ach_button = tk.Button(selection_window, text='學習成果', font=f, command=lambda: show_course_ach(inter),
                                   width=w, height=h)
-    course_ach_button.grid(row=0, column=1, sticky='sw')
+    course_ach_button.grid(row=1, column=0, sticky='e')
     per_button = tk.Button(selection_window, text='多元表現', font=f, command=lambda: show_per(inter),
                            width=w, height=h)
-    per_button.grid(row=1, column=0, sticky='e')
-    relogin_button = tk.Button(selection_window, text='重新登錄', font=f, command=reset,
-                               width=w, height=h)
-    relogin_button.grid(row=1, column=1, sticky='w')
+    per_button.grid(row=1, column=1, sticky='w')
     backup_button = tk.Button(selection_window, text='備份', font=f, command=backup_all_and_show_message,
                               width=w, height=h)
     backup_button.grid(row=2, column=0, sticky='e')
-    delete_backup_button = tk.Button(selection_window, text='刪除備份', font=f, command=delete_backup,
-                                     width=w, height=h)
-    delete_backup_button.grid(row=2, column=1, sticky='w')
     covert_img_button = tk.Button(selection_window, text='轉檔工具', font=f, command=covert.show_covert_img,
                                   width=w, height=h)
-    covert_img_button.grid(row=3, column=0, sticky='ne')
-    announcement_button = tk.Button(selection_window, text='公告', font=f, command=lambda :show_anno(inter),
-                                    width=w, height=h)
-    announcement_button.grid(row=3, column=1, sticky='nw')
+    covert_img_button.grid(row=2, column=1, sticky='w')
+    relogin_button = tk.Button(selection_window, text='重新登錄', font=f, command=reset,
+                               width=w, height=h)
+    relogin_button.grid(row=3, column=0, sticky='ne')
+    delete_backup_button = tk.Button(selection_window, text='刪除備份', font=f, command=delete_backup,
+                                     width=w, height=h)
+    delete_backup_button.grid(row=3, column=1, sticky='nw')
+    frame = tk.Frame(selection_window)
+    developer_label = tk.Label(frame, text='Developed by EFLin')
+    developer_label.pack(side='bottom', anchor='e')
+    frame.grid(column=1)
     selection_window.mainloop()
 
 
@@ -479,6 +490,8 @@ def show_login(inter: Interface):
     password_check.pack()
     login_button = tk.Button(login_window, text='登錄', command=create, font=f)
     login_button.pack()
+    developer_label = tk.Label(login_window, text='Developed by EFLin')
+    developer_label.pack(side='bottom', anchor='e')
     login_window.mainloop()
 
 
