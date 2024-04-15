@@ -120,22 +120,38 @@ class Interface(Request):
 
 
 @dataclass
-class Tree:
+class Show_subject_window:
     inter: Interface
-    window: tk.Toplevel
     i: int
     data: list = None
 
     def __post_init__(self):
+        self.window = tk.Toplevel()
+        self.window.title(self.inter.subject[self.i])
+        self.window.geometry('600x350')
+        developer_label = tk.Label(self.window, text='Developed by EFLin')
+        developer_label.pack(side='top', anchor='e')
         self.tree = None
         if self.i == 0:
             self.cols = self.inter.cadre_cols
         elif self.i == 1:
             self.cols = self.inter.course_cols
-        else:
+        elif self.i == 2:
             self.cols = self.inter.per_cols
+        else:
+            messagebox.showerror(title='警告', message='Unknown error')
+            exit()
         self.path = self.inter.main_path + self.inter.path_list[self.i]
+        backup_button = tk.Button(self.window, text=f'備份{self.inter.subject[self.i]}', command=self.rebuild_tree)
+        backup_button.pack()
+        open_file_button = tk.Button(self.window, text='開啟資料夾', command=self.open_folder)
+        open_file_button.pack()
+        note1_label = tk.Label(self.window, text='選中後點擊右鍵可複製。')
+        note1_label.pack()
+        self.scrollbar = tk.Scrollbar(self.window)
+        self.scrollbar.pack(side='right', fill='y')
         self.create_tree_data()
+        self.window.mainloop()
 
     def backup_and_show_message(self) -> bool:
         s = self.inter.backup(self.i)
@@ -162,13 +178,11 @@ class Tree:
             pyperclip.copy(copy_str)
 
         self.data = self.inter.load_data(self.i)
-        scrollbar = tk.Scrollbar(self.window)
-        scrollbar.pack(side='right', fill='y')
         self.tree = ttk.Treeview(
             self.window,
             show='headings',
             columns=[i for i in range(len(self.cols))],
-            yscrollcommand=scrollbar.set
+            yscrollcommand=self.scrollbar.set
         )
         for i in range(len(self.cols)):
             self.tree.column(i, width=80)
@@ -183,15 +197,11 @@ class Tree:
             self.tree.insert('', index='end', text='', values=data_list)
         self.tree.bind('<3>', lambda x: copy_from_treeview())
         self.tree.pack()
-        note1_label = tk.Label(self.window, text='選中後點擊右鍵可複製。')
-        note1_label.pack()
-        open_file_button = tk.Button(self.window, text='開啟資料夾', command=self.open_folder)
-        open_file_button.pack()
 
     def rebuild_tree(self):
         successful = self.backup_and_show_message()
         if successful:
-            self.tree.delete()
+            self.tree.destroy()
             self.create_tree_data()
         else:
             pass
@@ -261,15 +271,17 @@ class Covert:
                 messagebox.showerror(title='錯誤', message='轉換失敗。')
 
 
+"""
 def show_cadre_ex(inter: Interface):
     cadre_window = tk.Toplevel()
     cadre_window.title('幹部經歷')
     cadre_window.geometry('600x350')
-    cadre_tree = Tree(inter=inter, window=cadre_window, i=0)
+    developer_label = tk.Label(cadre_window, text='Developed by EFLin')
+    developer_label.pack(side='top', anchor='e')
+    cadre_tree = Show_subject_window(inter=inter, window=cadre_window, i=0)
     backup_cadre_button = tk.Button(cadre_window, text='備份幹部經歷', command=cadre_tree.rebuild_tree)
     backup_cadre_button.pack()
-    developer_label = tk.Label(cadre_window, text='Developed by EFLin')
-    developer_label.pack(side='bottom', anchor='e')
+    cadre_tree.create_tree_data()
     cadre_window.mainloop()
 
 
@@ -277,11 +289,12 @@ def show_course_ach(inter: Interface):
     course_ach_window = tk.Toplevel()
     course_ach_window.title('課程學習成果')
     course_ach_window.geometry('600x350')
-    course_ach_tree = Tree(inter=inter, window=course_ach_window, i=1)
+    developer_label = tk.Label(course_ach_window, text='Developed by EFLin')
+    developer_label.pack(side='top', anchor='e')
+    course_ach_tree = Show_subject_window(inter=inter, window=course_ach_window, i=1)
     backup__course_ach_button = tk.Button(course_ach_window, text='備份課程學習成果', command=course_ach_tree.rebuild_tree)
     backup__course_ach_button.pack()
-    developer_label = tk.Label(course_ach_window, text='Developed by EFLin')
-    developer_label.pack(side='bottom', anchor='e')
+    course_ach_tree.create_tree_data()
     course_ach_window.mainloop()
 
 
@@ -289,13 +302,14 @@ def show_per(inter: Interface):
     per_window = tk.Toplevel()
     per_window.title('多元表現')
     per_window.geometry('600x350')
-    per_tree = Tree(inter=inter, window=per_window, i=2)
-    backup_per_button = tk.Button(per_window, text='備份多元表現', command=per_tree.rebuild_tree)
-    backup_per_button.pack()
     developer_label = tk.Label(per_window, text='Developed by EFLin')
     developer_label.pack(side='bottom', anchor='e')
+    per_tree = Show_subject_window(inter=inter, window=per_window, i=2)
+    backup_per_button = tk.Button(per_window, text='備份多元表現', command=per_tree.rebuild_tree)
+    backup_per_button.pack()
+    per_tree.create_tree_data()
     per_window.mainloop()
-
+"""
 
 def show_anno(inter: Interface):
     successful, data = inter.announcement()
@@ -328,7 +342,7 @@ def show_anno(inter: Interface):
 
 def show_selection_window(inter: Interface):
     def backup_all_and_show_message():
-        s = inter.backup(0)
+        s = inter.backup_all()
         if s:
             for j in s:
                 messagebox.showerror('錯誤', j)
@@ -354,6 +368,9 @@ def show_selection_window(inter: Interface):
         else:
             pass
 
+    def create_subject_window(i: int):
+        subject_window = Show_subject_window(inter=inter, i=i)
+
     selection_window = tk.Tk()
     selection_window.title('台南一中學習歷程備份系統')
     selection_window.geometry('360x400')
@@ -363,16 +380,17 @@ def show_selection_window(inter: Interface):
     h = 3
     f = 'Microsoft_JhengHei 15'
     covert = Covert(inter)
+
     announcement_button = tk.Button(selection_window, text='公告', font=f, command=lambda :show_anno(inter),
                                     width=w, height=h)
     announcement_button.grid(row=0, column=0, sticky='se')
-    cadre_button = tk.Button(selection_window, text='幹部經歷', font=f, command=lambda: show_cadre_ex(inter),
+    cadre_button = tk.Button(selection_window, text='幹部經歷', font=f, command=lambda: create_subject_window(0),
                              width=w, height=h)
     cadre_button.grid(row=0, column=1, sticky='sw')
-    course_ach_button = tk.Button(selection_window, text='學習成果', font=f, command=lambda: show_course_ach(inter),
+    course_ach_button = tk.Button(selection_window, text='學習成果', font=f, command=lambda: create_subject_window(1),
                                   width=w, height=h)
     course_ach_button.grid(row=1, column=0, sticky='e')
-    per_button = tk.Button(selection_window, text='多元表現', font=f, command=lambda: show_per(inter),
+    per_button = tk.Button(selection_window, text='多元表現', font=f, command=lambda: create_subject_window(2),
                            width=w, height=h)
     per_button.grid(row=1, column=1, sticky='w')
     backup_button = tk.Button(selection_window, text='備份', font=f, command=backup_all_and_show_message,

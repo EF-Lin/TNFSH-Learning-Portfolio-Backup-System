@@ -18,17 +18,10 @@ class Request:
     """爬資料"""
     # info
     # main_path = '.\\files'
-    main_path = os.path.normpath('../files')
-    # path_list = ['\\cadre', '\\course_achievements', '\\performers', '\\user_info']
-    path_list = []
-    p = ['/cadre', '/course_achievements', '/performers', '/user_info']
-    for i in p:
-        path_list.append(os.path.normpath(i))
-    # tem_path_list = ['', '/course_achievements_2', '/performers_2']
-    p = ['', '/course_achievements_2', '/performers_2']
-    tem_path_list = []
-    for i in p[1:len(p)]:
-        tem_path_list.append(os.path.normpath(i))
+    main_path = os.path.normpath('.\\files')
+    path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
+    tem_path_list = ['', '/course_achievements_2', '/performers_2']
+    subject = ['幹部經歷', '課程學習成果', '多元表現']
     headers = {'user-agent': ''}
     file_list = []
     cadre_ex_list = []
@@ -38,6 +31,11 @@ class Request:
     file_type = '.txt'
 
     def __init__(self, data: dict):
+        # init path
+        for i in range(1, len(self.tem_path_list)):
+            self.tem_path_list[i] = os.path.normpath(self.tem_path_list[i])
+        for i in range(len(self.path_list)):
+            self.path_list[i] = os.path.normpath(self.path_list[i])
         # info
         self.init_folders()
         self.init_texts()
