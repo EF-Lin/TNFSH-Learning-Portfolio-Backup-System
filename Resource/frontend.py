@@ -6,7 +6,7 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from backend import Request
+from Resource.backend import Request
 
 
 class Interface(Request):
@@ -315,7 +315,7 @@ def show_anno(inter: Interface):
             if not deadline[j+1]:
                 text += '時間截止，你死了!\n\n'
             else:
-                text += f'距離時間截止還剩下{deadline[j+1]}天，趕快去做事，懶骨頭。\n\n'
+                text += f'距離時間截止還剩下{deadline[j+1]}，趕快去做事，懶骨頭。\n\n'
             j += 2
         anno_label = tk.Label(anno_window, text=text, font=f_text)
         anno_label.pack()

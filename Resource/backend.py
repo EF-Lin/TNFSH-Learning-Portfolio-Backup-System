@@ -18,7 +18,7 @@ class Request:
     """爬資料"""
     # info
     # main_path = '.\\files'
-    main_path = os.path.normpath('files')
+    main_path = os.path.normpath('../files')
     # path_list = ['\\cadre', '\\course_achievements', '\\performers', '\\user_info']
     path_list = []
     p = ['/cadre', '/course_achievements', '/performers', '/user_info']
@@ -416,8 +416,10 @@ class Request:
                 for j in n[i + 1:].split('~'):
                     t = datetime.strptime(j, '%Y/%m/%d%H:%S')
                     date.append(str(t.date()))
-                    if int((t - now).days) > 0:
-                        deadline.append(int((t - now).days))
+                    if int((t - now).days) == 0:
+                        deadline.append(f'{int((t - now).seconds) / 3600:.1f}小時')
+                    elif int((t - now).days) > 0:
+                        deadline.append(f'{int((t - now).days)}天')
                     else:
                         deadline.append(False)
             else:
