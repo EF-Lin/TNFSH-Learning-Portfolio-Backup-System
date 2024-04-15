@@ -271,46 +271,6 @@ class Covert:
                 messagebox.showerror(title='錯誤', message='轉換失敗。')
 
 
-"""
-def show_cadre_ex(inter: Interface):
-    cadre_window = tk.Toplevel()
-    cadre_window.title('幹部經歷')
-    cadre_window.geometry('600x350')
-    developer_label = tk.Label(cadre_window, text='Developed by EFLin')
-    developer_label.pack(side='top', anchor='e')
-    cadre_tree = Show_subject_window(inter=inter, window=cadre_window, i=0)
-    backup_cadre_button = tk.Button(cadre_window, text='備份幹部經歷', command=cadre_tree.rebuild_tree)
-    backup_cadre_button.pack()
-    cadre_tree.create_tree_data()
-    cadre_window.mainloop()
-
-
-def show_course_ach(inter: Interface):
-    course_ach_window = tk.Toplevel()
-    course_ach_window.title('課程學習成果')
-    course_ach_window.geometry('600x350')
-    developer_label = tk.Label(course_ach_window, text='Developed by EFLin')
-    developer_label.pack(side='top', anchor='e')
-    course_ach_tree = Show_subject_window(inter=inter, window=course_ach_window, i=1)
-    backup__course_ach_button = tk.Button(course_ach_window, text='備份課程學習成果', command=course_ach_tree.rebuild_tree)
-    backup__course_ach_button.pack()
-    course_ach_tree.create_tree_data()
-    course_ach_window.mainloop()
-
-
-def show_per(inter: Interface):
-    per_window = tk.Toplevel()
-    per_window.title('多元表現')
-    per_window.geometry('600x350')
-    developer_label = tk.Label(per_window, text='Developed by EFLin')
-    developer_label.pack(side='bottom', anchor='e')
-    per_tree = Show_subject_window(inter=inter, window=per_window, i=2)
-    backup_per_button = tk.Button(per_window, text='備份多元表現', command=per_tree.rebuild_tree)
-    backup_per_button.pack()
-    per_tree.create_tree_data()
-    per_window.mainloop()
-"""
-
 def show_anno(inter: Interface):
     successful, data = inter.announcement()
     text = ''
