@@ -40,8 +40,10 @@ class Interface(Request):
         '': '',
         '': ''
     """
-    font_title = 'Microsoft_JhengHei 18 bold'
-    font_text = 'Microsoft_JhengHei 12 bold'
+    font_title_1 = 'Microsoft_JhengHei 18 bold'
+    font_title_2 = 'Microsoft_JhengHei 18'
+    font_text_1 = 'Microsoft_JhengHei 12 bold'
+    font_text_2 = 'Microsoft_JhengHei 12'
     font_button = 'Microsoft_JhengHei 15'
 
     def __init__(self):
@@ -53,16 +55,51 @@ class Interface(Request):
             'validateCode': '',
             'formToken': ''
         }
-        # bools
-        self.if_login = None
         # windows
         self.selection_window: tk.Tk() = None
+        # bools
+        self.if_login = None
         # 初始化
         super().__init__(self.data)
         self.check_login_data()
 
     def __str__(self) -> str:
         return 'This is a interface'
+
+    def show_login(self):
+        def login():
+            loginId = loginId_entry.get()
+            password = password_entry.get()
+            self.init_user_info(loginId, password)
+            login_window.destroy()
+            self.show_validate_window()
+
+        def check():
+            if v.get():
+                password_entry.config(show='')
+            else:
+                password_entry.config(show='*')
+
+        login_window = tk.Tk()
+        login_window.geometry('300x200')
+        login_window.title('台南一中學習歷程備份系統')
+        loginId_label = tk.Label(login_window, text='帳號：', font=self.font_text_2)
+        loginId_label.pack()
+        loginId_entry = tk.Entry(login_window, width=30)
+        loginId_entry.pack()
+        v = tk.BooleanVar()
+        v.set(False)
+        password_label = tk.Label(login_window, text='密碼：', font=self.font_text_2)
+        password_label.pack()
+        password_entry = tk.Entry(login_window, show='*', width=30)
+        password_entry.pack()
+        password_check = tk.Checkbutton(login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
+        password_check.pack()
+        login_button = tk.Button(login_window, text='登錄', command=login, font=self.font_text_2)
+        login_button.pack()
+        developer_label = tk.Label(login_window, text='Developed by EFLin')
+        developer_label.pack(side='bottom', anchor='e')
+        login_window.mainloop()
 
     def init_user_info(self, loginId: str, password: str):
         path = self.main_path + self.path_list[3] + self.file_type
@@ -83,6 +120,30 @@ class Interface(Request):
             self.if_login = tk.StringVar()
             self.if_login.set('是否登入:否')
             self.show_selection_window()
+
+    def show_validate_window(self):
+        def check_validate():
+            self.data['validateCode'] = str(validate_entry.get())
+            validate_window.destroy()
+            self.validate_login()
+
+        try:
+            self.selection_window.destroy()
+        except:
+            pass
+        validate_window = tk.Tk()
+        validate_window.title('驗證碼')
+        validate_window.geometry('300x200')
+        img = self.get_validate_photo()
+        validate_label = tk.Label(validate_window, image=img)
+        validate_label.pack()
+        validate_title = tk.Label(validate_window, text='請輸入驗證碼')
+        validate_title.pack()
+        validate_entry = tk.Entry(validate_window)
+        validate_entry.pack()
+        validate_button = tk.Button(validate_window, text='確認', command=check_validate, width=5, height=2)
+        validate_button.pack()
+        validate_window.mainloop()
 
     def validate_login(self) -> bool or None:
         with open(self.main_path + self.path_list[3] + self.file_type, 'r') as f:
@@ -109,79 +170,6 @@ class Interface(Request):
                 self.validate_login()
             else:
                 pass
-
-    def show_validate_window(self):
-        def check_validate():
-            self.data['validateCode'] = str(validate_entry.get())
-            validate_window.destroy()
-            self.validate_login()
-
-        try:
-            self.selection_window.destroy()
-        except:
-            pass
-        validate_window = tk.Tk()
-        validate_window.title('驗證碼')
-        validate_window.geometry('300x200')
-        img = self.get_validate_photo()
-        validate_label = tk.Label(validate_window, image=img)
-        validate_label.pack()
-        validate_title = tk.Label(validate_window, text='請輸入驗證碼')
-        validate_title.pack()
-        validate_entry = tk.Entry(validate_window)
-        validate_entry.pack()
-        validate_button = tk.Button(validate_window, text='確認', command=check_validate, width=5, height=2)
-        validate_button.pack()
-        validate_window.mainloop()
-
-    def load_data(self, i: int) -> list:
-        try:
-            path = self.main_path + self.path_list[i] * 2 + self.file_type
-            with open(path, 'r') as f:
-                d = eval(f.read())
-            return d
-        except SyntaxError:
-            # SyntaxError: Please backup first.
-            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
-            return []
-        except Exception:
-            messagebox.showerror(title='錯誤', message='Unknown Error.')
-            return []
-
-    def show_login(self):
-        def login():
-            loginId = loginId_entry.get()
-            password = password_entry.get()
-            self.init_user_info(loginId, password)
-            login_window.destroy()
-            self.show_validate_window()
-
-        def check():
-            if v.get():
-                password_entry.config(show='')
-            else:
-                password_entry.config(show='*')
-
-        login_window = tk.Tk()
-        login_window.geometry('300x200')
-        login_window.title('台南一中學習歷程備份系統')
-        loginId_label = tk.Label(login_window, text='帳號：', font=self.font_text)
-        loginId_label.pack()
-        loginId_entry = tk.Entry(login_window, width=30)
-        loginId_entry.pack()
-        v = tk.BooleanVar()
-        v.set(False)
-        password_label = tk.Label(login_window, text='密碼：', font=self.font_text)
-        password_label.pack()
-        password_entry = tk.Entry(login_window, show='*', width=30)
-        password_entry.pack()
-        password_check = tk.Checkbutton(login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text)
-        password_check.pack()
-        login_button = tk.Button(login_window, text='登錄', command=login, font=self.font_text)
-        login_button.pack()
-        developer_label = tk.Label(login_window, text='Developed by EFLin')
-        developer_label.pack(side='bottom', anchor='e')
-        login_window.mainloop()
 
     def show_selection_window(self):
         def backup_all_and_show_message():
@@ -258,6 +246,20 @@ class Interface(Request):
         frame.grid(column=1)
         self.selection_window.mainloop()
 
+    def load_data(self, i: int) -> list:
+        try:
+            path = self.main_path + self.path_list[i] * 2 + self.file_type
+            with open(path, 'r') as f:
+                d = eval(f.read())
+            return d
+        except SyntaxError:
+            # SyntaxError: Please backup first.
+            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
+            return []
+        except Exception:
+            messagebox.showerror(title='錯誤', message='Unknown Error.')
+            return []
+
     def show_anno(self):
         successful, data = self.announcement()
         text = ''
@@ -266,7 +268,7 @@ class Interface(Request):
             anno_window = tk.Toplevel()
             anno_window.title('公告')
             anno_window.geometry('500x300')
-            anno_title_label = tk.Label(anno_window, text='公告', font=self.font_title)
+            anno_title_label = tk.Label(anno_window, text='公告', font=self.font_title_1)
             anno_title_label.pack()
             j = 0
             for i in range(len(announcement)):
@@ -276,7 +278,7 @@ class Interface(Request):
                 else:
                     text += f'距離時間截止還剩下{deadline[j + 1]}，趕快去做事，懶骨頭。\n\n'
                 j += 2
-            anno_label = tk.Label(anno_window, text=text, font=self.font_text)
+            anno_label = tk.Label(anno_window, text=text, font=self.font_text_1)
             anno_label.pack()
             developer_label = tk.Label(anno_window, text='Developed by EFLin')
             developer_label.pack(side='bottom', anchor='e')
@@ -378,6 +380,9 @@ class Covert:
         self.inter = inter
         self.files: tuple = ()
         self.img_size: list = []
+
+    def __str__(self):
+        return 'This is a tool which can covert images to pdf.'
 
     def show_covert_img(self):
         self.show_covert_img_window = tk.Toplevel()
