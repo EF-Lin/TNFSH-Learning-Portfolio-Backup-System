@@ -18,7 +18,7 @@ class Request:
     """爬資料"""
     # info
     # main_path = '.\\files'
-    main_path = os.path.normpath('.\\files')
+    main_path = os.path.normpath('./files')
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
