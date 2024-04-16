@@ -6,7 +6,7 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from Resource.backend import Request
+from v2.Resource.backend import Request
 
 
 class Interface(Request):
@@ -70,7 +70,7 @@ class Interface(Request):
 
     def check_login_data(self) -> bool or None:
         """登錄功能"""
-        path_name = super().main_path + super().path_list[3] + '.txt'
+        path_name = self.main_path + self.path_list[3] + self.file_type
         f = os.path.exists(path_name)
         if not f:
             self.k = True
@@ -96,7 +96,7 @@ class Interface(Request):
                     return True
             else:
                 f = messagebox.askyesnocancel(title='錯誤',
-                                              message=response + '\n點擊是重新嘗試登陸，點擊否重新輸入帳號密碼。')
+                                              message=response + '\n點擊「是」重新嘗試登陸，點擊「否」重新輸入帳號密碼。')
                 if f:
                     self.check_login_data()
                 else:
@@ -115,8 +115,6 @@ class Interface(Request):
         except Exception:
             messagebox.showerror(title='錯誤', message='Unknown Error.')
             return []
-
-    #def announcement(self):
 
 
 @dataclass
@@ -329,7 +327,7 @@ def show_selection_window(inter: Interface):
             pass
 
     def create_subject_window(i: int):
-        subject_window = Show_subject_window(inter=inter, i=i)
+        Show_subject_window(inter=inter, i=i)
 
     selection_window = tk.Tk()
     selection_window.title('台南一中學習歷程備份系統')
@@ -341,7 +339,7 @@ def show_selection_window(inter: Interface):
     f = 'Microsoft_JhengHei 15'
     covert = Covert(inter)
 
-    announcement_button = tk.Button(selection_window, text='公告', font=f, command=lambda :show_anno(inter),
+    announcement_button = tk.Button(selection_window, text='公告', font=f, command=lambda: show_anno(inter),
                                     width=w, height=h)
     announcement_button.grid(row=0, column=0, sticky='se')
     cadre_button = tk.Button(selection_window, text='幹部經歷', font=f, command=lambda: create_subject_window(0),

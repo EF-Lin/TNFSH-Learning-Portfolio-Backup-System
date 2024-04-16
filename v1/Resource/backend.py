@@ -9,7 +9,7 @@ import json
 import os
 from fake_useragent import UserAgent
 import shutil
-from PIL import Image
+from PIL import Image, ImageTk
 from datetime import datetime
 import time
 
@@ -40,6 +40,8 @@ class Request:
         self.init_folders()
         self.init_texts()
         self.data = data
+        # create session
+        self.session_requests = re.session()
         #self.login()
 
     def __str__(self) -> str:
@@ -96,6 +98,8 @@ class Request:
             return True, [a, b, c]
         except re.exceptions.ConnectionError:
             return False, 'Please check your internet.'
+        except AttributeError:
+            return False, 'Please login first.'
         except Exception:
             return False, 'Unknown Error.'
 
@@ -187,30 +191,24 @@ class Request:
         except Exception:
             return 'Unknown Error.'
 
-    def orc(self, img):
-        ORC = ddddocr.DdddOcr(show_ad=False)
-        self.val_words = ORC.classification(img).lower()
-
     def generate_header(self):
         ua = UserAgent()
         self.headers['user-agent'] = ua.random
 
-    def req_login(self):
+    def get_validate_photo(self):
+        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
+        pic_url = response.text.split('\"')
+        tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(pic_url[3]))))
+        return tk_img
+
+    def req_login(self) -> str:
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
-        # new session
-        self.session_requests = re.session()
         # request
         response = self.session_requests.get(url)
         soup = bs(response.text, 'html.parser')
         # get token
         token = soup.find('input', {'name': 'formToken'})['value']
         self.data['formToken'] = token
-        # get validate photo
-        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-        pic_url = response.text.split('\"')
-        img = base64.b64decode(pic_url[3])
-        self.orc(img)
-        self.data['validateCode'] = self.val_words
         self.generate_header()
         response = self.session_requests.post(
             url=url,
@@ -426,16 +424,15 @@ class Request:
 
 
 if __name__ == '__main__':
-    loginId = str(input('請輸入帳號'))
-    password = str(input('請輸入密碼'))
+    # loginId = str(input('請輸入帳號'))
+    # password = str(input('請輸入密碼'))
     Data = {
         'city': '12',
         'schNo': '210305.國立台南第一高級中學',
-        'loginId': loginId,
-        'password': password,
+    #     'loginId': loginId,
+    #     'password': password,
         'validateCode': '',
         'formToken': ''
     }
     response = Request(Data)
-    s = response.login()
-    response.req_announcement()
+    response.get_validate_photo()
