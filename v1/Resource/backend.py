@@ -3,7 +3,6 @@ import io
 import bs4
 import requests as re
 from bs4 import BeautifulSoup as bs
-import ddddocr
 import base64
 import json
 import os
