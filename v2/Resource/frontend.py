@@ -99,7 +99,7 @@ class Interface(Request):
         password_entry.pack()
         password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
         password_check.pack()
-        login_button = tk.Button(self.login_window, text='登錄', command=login, font=self.font_text_2)
+        login_button = tk.Button(self.login_window, text='登入', command=login, font=self.font_text_2)
         login_button.pack()
         developer_label = tk.Label(self.login_window, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
@@ -147,7 +147,7 @@ class Interface(Request):
                     return True
             else:
                 f = messagebox.askyesnocancel(title='錯誤',
-                                              message=response + '\n點擊「是」重新嘗試登陸，點擊「否」重新輸入帳號密碼。')
+                                              message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
                 if f:
                     self.check_login_data()
                 else:
@@ -210,7 +210,7 @@ class Interface(Request):
         covert_img_button = tk.Button(self.selection_window, text='轉檔工具', font=self.font_button,
                                       command=covert.show_covert_img, width=w, height=h)
         covert_img_button.grid(row=2, column=1, sticky='w')
-        relogin_button = tk.Button(self.selection_window, text='重新登錄', font=self.font_button,
+        relogin_button = tk.Button(self.selection_window, text='重新登入', font=self.font_button,
                                    command=reset, width=w, height=h)
         relogin_button.grid(row=3, column=0, sticky='ne')
         delete_backup_button = tk.Button(self.selection_window, text='刪除備份', font=self.font_button,

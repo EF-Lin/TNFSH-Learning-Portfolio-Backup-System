@@ -97,7 +97,7 @@ class Interface(Request):
         password_entry.pack()
         password_check = tk.Checkbutton(login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
         password_check.pack()
-        login_button = tk.Button(login_window, text='登錄', command=login, font=self.font_text_2)
+        login_button = tk.Button(login_window, text='登入', command=login, font=self.font_text_2)
         login_button.pack()
         developer_label = tk.Label(login_window, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
@@ -112,7 +112,6 @@ class Interface(Request):
         self.generate_text(path, user_info)
 
     def check_login_data(self):
-        """登錄功能"""
         path_name = self.main_path + self.path_list[3] + self.file_type
         f = os.path.exists(path_name)
         if not f:
@@ -154,7 +153,7 @@ class Interface(Request):
         self.data.update(user_info)
         response = self.login()
         if response == 'S':
-            messagebox.showinfo('訊息', '登陸成功')
+            messagebox.showinfo('訊息', '登入成功')
             self.selection_window = tk.Tk()
             self.if_login = tk.StringVar()
             self.if_login.set('是否登入:是')
@@ -168,7 +167,7 @@ class Interface(Request):
                 pass
         else:
             f = messagebox.askyesnocancel(title='錯誤',
-                                          message=response + '\n點擊「是」重新嘗試登陸，點擊「否」重新輸入帳號密碼。')
+                                          message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
             if f:
                 self.validate_login()
             else:
@@ -215,7 +214,7 @@ class Interface(Request):
         h = 3
         covert = Covert(self)
 
-        login_button = tk.Button(self.selection_window, text='登陸', font=self.font_button,
+        login_button = tk.Button(self.selection_window, text='登入', font=self.font_button,
                                  command=self.show_validate_window, width=16, height=2)
         login_button.grid(row=0, column=0, columnspan=2, sticky='n')
         announcement_button = tk.Button(self.selection_window, text='公告', font=self.font_button,
@@ -236,7 +235,7 @@ class Interface(Request):
         covert_img_button = tk.Button(self.selection_window, text='轉檔工具', font=self.font_button,
                                       command=covert.show_covert_img, width=w, height=h)
         covert_img_button.grid(row=3, column=1, sticky='w')
-        relogin_button = tk.Button(self.selection_window, text='重新登錄', font=self.font_button,
+        relogin_button = tk.Button(self.selection_window, text='重新登入', font=self.font_button,
                                    command=reset, width=w, height=h)
         relogin_button.grid(row=4, column=0, sticky='ne')
         delete_backup_button = tk.Button(self.selection_window, text='刪除備份', font=self.font_button,
