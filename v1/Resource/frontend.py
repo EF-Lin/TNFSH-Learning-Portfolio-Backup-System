@@ -6,10 +6,11 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from v1.Resource.backend import Request
+from Resource.backend import Request
 
 
 class Interface(Request):
+    """主介面"""
     cadre_cols = {
         'syear': '學年',
         'seme': '學期',
@@ -293,6 +294,7 @@ class Interface(Request):
 
 @dataclass
 class Show_subject_window:
+    """子視窗"""
     inter: Interface
     i: int
     data: list = None
@@ -381,6 +383,7 @@ class Show_subject_window:
 
 
 class Covert:
+    """轉檔視窗"""
     def __init__(self, inter: Interface):
         self.inter = inter
         self.files: tuple = ()

@@ -2,7 +2,6 @@ import asyncio
 import io
 import bs4
 import requests as re
-from bs4 import BeautifulSoup as bs
 import ddddocr
 import base64
 import json
@@ -201,7 +200,7 @@ class Request:
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # request
         response = self.session_requests.get(url)
-        soup = bs(response.text, 'html.parser')
+        soup = bs4.BeautifulSoup(response.text, 'html.parser')
         # get token
         token = soup.find('input', {'name': 'formToken'})['value']
         self.data['formToken'] = token
