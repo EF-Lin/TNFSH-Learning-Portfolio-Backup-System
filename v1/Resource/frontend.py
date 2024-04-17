@@ -420,7 +420,8 @@ class Covert:
         self.frame.pack_forget()
         self.frame = tk.Frame(self.show_covert_img_window)
         self.img_size = [tk.IntVar() for _ in range(len(self.files))]
-        title = tk.Label(self.frame, text='調整大小，10為不變，9為0.9倍，以此類推。')
+        message = tk.Label(self.frame, text='調整大小，10為不變，9為0.9倍，以此類推。')
+        message.pack()
         for i in range(len(self.img_size)):
             self.img_size[i].set(10)
         for i in range(len(self.files)):
