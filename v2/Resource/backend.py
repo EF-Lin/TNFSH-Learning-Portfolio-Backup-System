@@ -87,7 +87,7 @@ class Request:
         try:
             return self.req_login()
         except re.exceptions.ConnectionError:
-            return 'ConnectionError: Please check your internet.'
+            return 'Please check your internet.'
         except Exception as ex:
             return str(ex)
 
