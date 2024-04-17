@@ -85,6 +85,7 @@ class Interface(Request):
         self.login_window = tk.Tk()
         self.login_window.geometry('300x200')
         self.login_window.title('台南一中學習歷程備份系統')
+        self.login_window.iconbitmap('icon.ico')
         loginId_label = tk.Label(self.login_window, text='帳號：', font=self.font_text_2)
         loginId_label.pack()
         loginId_entry = tk.Entry(self.login_window, width=30)
@@ -184,6 +185,7 @@ class Interface(Request):
 
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
+        self.selection_window.iconbitmap(default='icon.ico')
         self.selection_window.rowconfigure((0, 1, 2, 3), weight=1)
         self.selection_window.columnconfigure((0, 1), weight=1)
         w = 8
@@ -243,6 +245,7 @@ class Interface(Request):
             anno_window = tk.Toplevel()
             anno_window.title('公告')
             anno_window.geometry('500x300')
+            anno_window.iconbitmap('icon.ico')
             anno_title_label = tk.Label(anno_window, text='公告', font=self.font_title_1)
             anno_title_label.pack()
             j = 0
@@ -272,6 +275,7 @@ class Show_subject_window:
         self.window = tk.Toplevel()
         self.window.title(self.inter.subject[self.i])
         self.window.geometry('600x350')
+        self.window.iconbitmap('icon.ico')
         developer_label = tk.Label(self.window, text='Developed by EFLin')
         developer_label.pack(side='top', anchor='e')
         self.tree = None
@@ -363,6 +367,7 @@ class Covert:
         self.show_covert_img_window = tk.Toplevel()
         self.show_covert_img_window.title('Image To pdf')
         self.show_covert_img_window.geometry('300x400')
+        self.show_covert_img_window.iconbitmap('icon.ico')
         self.frame = tk.Frame(self.show_covert_img_window)
         self.frame.pack()
         self.img_name = tk.StringVar()
