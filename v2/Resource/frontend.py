@@ -11,6 +11,8 @@ from Resource.backend import Request
 
 class Interface(Request):
     """主介面"""
+    city = '12'
+    schNo = '210305.國立台南第一高級中學'
     cadre_cols = {
         'syear': '學年',
         'seme': '學期',
@@ -48,8 +50,6 @@ class Interface(Request):
     font_button = 'Microsoft_JhengHei 15'
 
     def __init__(self):
-        self.city = '12'
-        self.schNo = '210305.國立台南第一高級中學'
         self.data = {
             'city': self.city,
             'schNo': self.schNo,
