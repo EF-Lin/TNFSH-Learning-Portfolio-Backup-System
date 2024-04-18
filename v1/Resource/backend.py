@@ -5,7 +5,6 @@ import requests as re
 import base64
 import json
 import os
-from fake_useragent import UserAgent
 import shutil
 from PIL import Image, ImageTk
 from datetime import datetime
@@ -20,7 +19,7 @@ class Request:
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
-    headers = {'user-agent': ''}
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36(KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'}
     file_list = []
     cadre_ex_list = []
     course_ach_list = []
@@ -189,10 +188,6 @@ class Request:
         except Exception:
             return 'Unknown Error.'
 
-    def generate_header(self):
-        ua = UserAgent()
-        self.headers['user-agent'] = ua.random
-
     def get_validate_photo(self):
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
         pic_url = response.text.split('\"')
@@ -207,7 +202,6 @@ class Request:
         # get token
         token = soup.find('input', {'name': 'formToken'})['value']
         self.data['formToken'] = token
-        self.generate_header()
         response = self.session_requests.post(
             url=url,
             data=self.data,
@@ -233,7 +227,6 @@ class Request:
         self.generate_text(path, file)
 
     def req_text(self, i, url: str, data: dict):
-        self.generate_header()
         response = self.session_requests.post(
             url=url,
             data=data,
@@ -330,7 +323,6 @@ class Request:
             for i in self.course_ach_list:
                 uid = i["dp"]
                 url = f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={uid}'
-                self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 with open(self.main_path + self.tem_path_list[1] + f'/{i["dn"]}', 'wb') as f:
@@ -344,7 +336,6 @@ class Request:
             for i in self.per_list:
                 uid = i['df1']
                 url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
-                self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 path = self.main_path + self.tem_path_list[2] + f"/{i['certiName']}"
@@ -387,7 +378,6 @@ class Request:
 
     def req_announcement(self) -> [list, list, list]:
         url = 'https://epf-mlife.k12ea.gov.tw/student.do'
-        self.generate_header()
         response = self.session_requests.post(
             url=url,
             headers=self.headers,
