@@ -77,7 +77,7 @@
 ### 無法運行系統
 可能是安裝Python時出現問題，請檢查pip是否已被安裝，並重新執行setup.bat。
 或是嘗試在安裝Python後手動安裝以下庫：
-| 庫名稱           | 安裝指令                     |
+| 函式庫名稱       | 安裝指令                      |
 | :------------- | :-------------------------- |
 | Asyncio        | pip install asyncio         |
 | IO             | pip install Python-IO&nbsp; |
