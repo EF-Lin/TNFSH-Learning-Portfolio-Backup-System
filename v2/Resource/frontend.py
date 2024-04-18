@@ -227,15 +227,15 @@ class Interface(Request):
     def load_data(self, i: int) -> list:
         try:
             path = self.main_path + self.path_list[i] * 2 + self.file_type
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding="utf-8") as f:
                 d = eval(f.read())
             return d
         except SyntaxError:
             # SyntaxError: Please backup first.
             messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
             return []
-        except Exception:
-            messagebox.showerror(title='錯誤', message='Unknown Error.')
+        except Exception as ex:
+            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
             return []
 
     def show_anno(self):

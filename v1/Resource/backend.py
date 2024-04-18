@@ -52,7 +52,7 @@ class Request:
             pass
 
     def generate_text(self, path, file):
-        with open(path, 'w') as t:
+        with open(path, 'w', encoding="utf-8") as t:
             t.write(str(file))
 
     def init_folders(self):
@@ -412,13 +412,13 @@ class Request:
 
 
 if __name__ == '__main__':
-    # loginId = str(input('請輸入帳號'))
-    # password = str(input('請輸入密碼'))
+    loginId = str(input('請輸入帳號'))
+    password = str(input('請輸入密碼'))
     Data = {
         'city': '12',
         'schNo': '210305.國立台南第一高級中學',
-    #     'loginId': loginId,
-    #     'password': password,
+        'loginId': loginId,
+        'password': password,
         'validateCode': '',
         'formToken': ''
     }

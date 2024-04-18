@@ -54,7 +54,7 @@ class Request:
             pass
 
     def generate_text(self, path, file):
-        with open(path, 'w') as t:
+        with open(path, 'w', encoding="utf-8") as t:
             t.write(str(file))
 
     def init_folders(self):
@@ -437,4 +437,3 @@ if __name__ == '__main__':
     }
     response = Request(Data)
     s = response.login()
-    response.req_announcement()
