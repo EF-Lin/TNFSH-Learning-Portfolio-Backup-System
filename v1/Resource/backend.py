@@ -81,13 +81,13 @@ class Request:
             else:
                 pass
 
-    def login(self):
+    def login(self) -> str:
         try:
             return self.req_login()
         except re.exceptions.ConnectionError:
             return 'Please check your internet.'
         except Exception as ex:
-            return str(ex)
+            return f'Unknown Error.\n{str(ex)}\n'
 
     def announcement(self) -> [bool, list, list, list] or [bool, str]:
         try:
@@ -138,8 +138,8 @@ class Request:
         except re.exceptions.ConnectionError:
             # f'ConnectionError: Backup {name[i]} failed, please check your internet.'
             return f'Backup {name[i]} failed, please check your internet.'
-        except Exception:
-            return 'Unknown Error.'
+        except Exception as ex:
+            return f'Unknown Error.\n{str(ex)}\n'
 
     def backup_cadre_ex(self) -> str:
         try:
@@ -151,8 +151,8 @@ class Request:
         except re.exceptions.ConnectionError:
             # 'ConnectionError: Backup cadre experiment failed, please check your internet.'
             return 'Backup cadre experiment failed, please check your internet.'
-        except Exception:
-            return 'Unknown Error.'
+        except Exception as ex:
+            return f'Unknown Error.\n{str(ex)}\n'
 
     def backup_course_ach(self) -> str:
         try:
@@ -168,8 +168,8 @@ class Request:
         except re.exceptions.ConnectionError:
             # 'ConnectionError: Backup course achievements failed, please check your internet.'
             return 'Backup course achievements failed, please check your internet.'
-        except Exception:
-            return 'Unknown Error.'
+        except Exception as ex:
+            return f'Unknown Error.\n{str(ex)}\n'
 
     def backup_per(self) -> str:
         try:
@@ -185,8 +185,8 @@ class Request:
         except re.exceptions.ConnectionError:
             # 'ConnectionError: Backup performers failed, please check your internet.'
             return 'Backup performers failed, please check your internet.'
-        except Exception:
-            return 'Unknown Error.'
+        except Exception as ex:
+            return f'Unknown Error.\n{str(ex)}\n'
 
     def get_validate_photo(self):
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
