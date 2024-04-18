@@ -64,19 +64,19 @@
 ### 無法運行系統
 可能是安裝Python時出現問題，請檢查pip是否已被安裝，並重新執行setup.bat。
 或是嘗試在安裝Python後手動安裝以下庫：
-| 庫名稱           | 安裝指令                     |     |
-| :------------- | :-------------------------- | --- |
-| Asyncio        | pip install asyncio         |     |
-| IO             | pip install Python-IO&nbsp; |     |
-| BeautifulSoup4 | pip install bs4             |     |
-| Requests       | pip install requests        |     |
-| Shutil         | pip install pytest-shutil   |     |
-| PIL            | pip install Pillow          |     |
-| Fake_useragent | pip install fake_useragent  |     |
-| DateTime       | pip install DateTime        |     |
-| Dataclasses    | pip install dataclasses     |     |
-| Tkinter        | pip install tk              |     |
-| Pyperclip      | pip install pyperclip       |     |
+| 庫名稱           | 安裝指令                     |
+| :------------- | :-------------------------- |
+| Asyncio        | pip install asyncio         |
+| IO             | pip install Python-IO&nbsp; |
+| BeautifulSoup4 | pip install bs4             |
+| Requests       | pip install requests        |
+| Shutil         | pip install pytest-shutil   |
+| PIL            | pip install Pillow          |
+| Fake_useragent | pip install fake_useragent  |
+| DateTime       | pip install DateTime        |
+| Dataclasses    | pip install dataclasses     |
+| Tkinter        | pip install tk              |
+| Pyperclip      | pip install pyperclip       |
 
 ### 系統錯誤
 #### Please check your internet.
@@ -103,3 +103,4 @@ v1版本特殊錯誤，需先點選「登入」並輸入驗證碼，跳出訊息
 
 ## 改善目標(未定)
 - 新增選擇縣市與學校功能，擴大使用群體。
+- 新增輩分進度條。
