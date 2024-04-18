@@ -1,4 +1,4 @@
-@echo on
+@echo off
 pip install asyncio
 pip install Python-IO
 pip install bs4
