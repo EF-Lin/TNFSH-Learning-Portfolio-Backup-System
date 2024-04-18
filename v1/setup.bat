@@ -1,4 +1,4 @@
-@echo off
+@echo on
 pip install asyncio
 pip install Python-IO
 pip install bs4
@@ -10,5 +10,5 @@ pip install DateTime
 pip install dataclasses
 pip install tk
 pip install pyperclip
-echo 基本配置設定完成，請開啟"Learning_Portfolio_Backup_System.bat"
+echo Setup finish, please open "Learning_Portfolio_Backup_System.bat"
 pause

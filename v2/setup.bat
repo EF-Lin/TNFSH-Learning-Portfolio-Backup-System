@@ -11,5 +11,5 @@ pip install dataclasses
 pip install tk
 pip install pyperclip
 pip install ddddocr
-echo 基本配置設定完成，請開啟"Learning_Portfolio_Backup_System.bat"
+echo Setup finish, please open "Learning_Portfolio_Backup_System.bat"
 pause
