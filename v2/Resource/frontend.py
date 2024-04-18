@@ -391,7 +391,7 @@ class Covert:
 
     def select_images(self):
         self.files = filedialog.askopenfilenames(parent=self.show_covert_img_window, title='請選擇圖片',
-                                                 filetypes=[('image files', '.png;.jpg;.jpge')])
+                                                 filetypes=[('image files', '.png;*.jpg;*.jpeg')])
         self.frame.pack_forget()
         self.frame = tk.Frame(self.show_covert_img_window)
         self.img_size = [tk.IntVar() for _ in range(len(self.files))]
