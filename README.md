@@ -16,9 +16,16 @@
 ### v2
 - 自動辨別驗證碼，需要較大空間，運行速度較慢。
 - 辨識驗證碼功能使用ddddocr。
+- 有使用fake_useragent，每次向網站要求資料均會生成隨機header，較不容易被封鎖。
 
 
 ## 安裝
+### v1
+1. 下載"TNFSH_Backup_System_v1.exe"和"icon.ioc"。
+2. 將兩個檔案放進同個資料夾中，運行"TNFSH_Backup_System_v1.exe"。
+3. ~~等待教育部學習檔案網站被損毀體現備份系統的重要性。~~ 
+
+### v2
 1. 自[Python官網](https://www.python.org/downloads/release/python-3123/)下載Python3.12，或點[這裡](https://www.python.org/ftp/python/3.12.3/python-3.12.3-amd64.exe)下載。
 2. 安裝Python
    - 自動安裝：一路點選Next並確認選取方塊都有打勾。
