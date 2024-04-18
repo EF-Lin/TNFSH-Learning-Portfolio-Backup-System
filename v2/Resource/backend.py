@@ -366,7 +366,7 @@ class Request:
         else:
             raise FileNotFoundError
 
-    def covert_image_to_pdf(self, files: tuple, name: str, size: list):
+    def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
         try:
             img = [
                 Image.open(f)
@@ -384,9 +384,8 @@ class Request:
             )
             return True
         except Exception as ex:
-            print(ex)
             # IOError or Exception
-            return False
+            return str(ex)
 
     def req_announcement(self) -> [list, list, list]:
         url = 'https://epf-mlife.k12ea.gov.tw/student.do'

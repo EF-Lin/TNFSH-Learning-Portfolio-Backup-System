@@ -448,7 +448,7 @@ class Covert:
                 # messagebox.showinfo(title='訊息', message='轉換成功')
                 os.startfile(self.inter.main_path)
             else:
-                messagebox.showerror(title='錯誤', message='轉換失敗。')
+                messagebox.showerror(title='錯誤', message=f'{covert_successful}\n轉換失敗。')
 
 
 if __name__ == '__main__':
