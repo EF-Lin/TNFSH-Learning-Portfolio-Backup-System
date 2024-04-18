@@ -77,6 +77,7 @@
 | Dataclasses    | pip install dataclasses     |
 | Tkinter        | pip install tk              |
 | Pyperclip      | pip install pyperclip       |
+| 带带弟弟OCR(v2適用)| pip install ddddocr        |
 
 ### 系統錯誤
 #### Please check your internet.
