@@ -188,9 +188,9 @@ class Request:
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
-    def orc(self, img):
-        ORC = ddddocr.DdddOcr(show_ad=False)
-        self.val_words = ORC.classification(img).lower()
+    def ocr(self, img):
+        OCR = ddddocr.DdddOcr(show_ad=False)
+        self.val_words = OCR.classification(img).lower()
 
     def generate_header(self):
         ua = UserAgent()
@@ -208,7 +208,7 @@ class Request:
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
         pic_url = response.text.split('\"')
         img = base64.b64decode(pic_url[3])
-        self.orc(img)
+        self.ocr(img)
         self.data['validateCode'] = self.val_words
         self.generate_header()
         response = self.session_requests.post(
