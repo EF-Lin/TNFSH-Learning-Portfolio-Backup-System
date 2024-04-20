@@ -85,7 +85,6 @@
 | Requests       | pip install requests        |
 | Shutil         | pip install pytest-shutil   |
 | PIL            | pip install Pillow          |
-| Fake_useragent | pip install fake_useragent  |
 | DateTime       | pip install DateTime        |
 | Dataclasses    | pip install dataclasses     |
 | Tkinter        | pip install tk              |

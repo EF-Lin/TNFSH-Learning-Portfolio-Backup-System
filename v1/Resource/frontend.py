@@ -6,7 +6,8 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from Resource.backend import Request
+# from Resource.backend import Request
+from backend import Request
 
 
 class Interface(Request):
@@ -151,7 +152,7 @@ class Interface(Request):
         with open(self.main_path + self.path_list[3] + self.file_type, 'r') as f:
             user_info = eval(f.read())
         self.data.update(user_info)
-        response = self.login()
+        response = self.login(1)
         if response == 'S':
             messagebox.showinfo('訊息', '登入成功')
             self.selection_window = tk.Tk()

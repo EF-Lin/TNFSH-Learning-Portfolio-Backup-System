@@ -2,11 +2,9 @@ import asyncio
 import io
 import bs4
 import requests as re
-import ddddocr
 import base64
 import json
 import os
-from fake_useragent import UserAgent
 import shutil
 from PIL import Image
 from datetime import datetime
@@ -21,7 +19,7 @@ class Request:
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
-    headers = {'user-agent': ''}
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36(KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'}
     file_list = []
     cadre_ex_list = []
     course_ach_list = []
@@ -83,9 +81,9 @@ class Request:
             else:
                 pass
 
-    def login(self) -> str:
+    def login(self, v: int) -> str:
         try:
-            return self.req_login()
+            return self.req_login(v)
         except re.exceptions.ConnectionError:
             return 'Please check your internet.'
         except Exception as ex:
@@ -93,12 +91,11 @@ class Request:
 
     def announcement(self) -> [bool, list, list, list] or [bool, str]:
         try:
-            a, b, c = self.req_announcement()
-            return True, [a, b, c]
+            return True, [self.req_announcement()]
         except re.exceptions.ConnectionError:
             return False, 'Please check your internet.'
-        except Exception:
-            return False, 'Unknown Error.'
+        except Exception as ex:
+            return False, f'Unknown Error.\n{str(ex)}'
 
     def backup_all(self) -> list:
         # s1 = self.backup_cadre_ex()
@@ -189,14 +186,18 @@ class Request:
             return f'Unknown Error.\n{str(ex)}\n'
 
     def ocr(self, img):
+        import ddddocr
         OCR = ddddocr.DdddOcr(show_ad=False)
         self.val_words = OCR.classification(img).lower()
 
-    def generate_header(self):
-        ua = UserAgent()
-        self.headers['user-agent'] = ua.random
+    def get_validate_photo(self):
+        from PIL import ImageTk
+        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
+        pic_url = response.text.split('\"')
+        tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(pic_url[3]))))
+        return tk_img
 
-    def req_login(self):
+    def req_login(self, v: int):
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # request
         response = self.session_requests.get(url)
@@ -208,9 +209,9 @@ class Request:
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
         pic_url = response.text.split('\"')
         img = base64.b64decode(pic_url[3])
-        self.ocr(img)
-        self.data['validateCode'] = self.val_words
-        self.generate_header()
+        if v == 2:
+            self.ocr(img)
+            self.data['validateCode'] = self.val_words
         response = self.session_requests.post(
             url=url,
             data=self.data,
@@ -236,7 +237,6 @@ class Request:
         self.generate_text(path, file)
 
     def req_text(self, i, url: str, data: dict):
-        self.generate_header()
         response = self.session_requests.post(
             url=url,
             data=data,
@@ -263,24 +263,6 @@ class Request:
             'session_key': self.key
         }
         self.req_text(3, url, data)
-        """
-        #資料整理
-        file_info_str = response.text.split('},{')
-        for i in file_info_str:
-            try:
-                # find name
-                j = i.find("\"file\":\"") + 8
-                k = i.find("\"", j)
-                name = i[j:k]
-                self.file_name.append(name)
-                # find year
-                j = i.find("\"syear\":\"") + 9
-                k = i.find("\"", j)
-                year = i[j:k]
-                self.file_year.append(year)
-            except:
-                continue
-        """
 
     async def cadre_experience(self):
         url = 'https://epf-mlife.k12ea.gov.tw/serviceExperienceQuery.do'
@@ -333,7 +315,6 @@ class Request:
             for i in self.course_ach_list:
                 uid = i["dp"]
                 url = f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={uid}'
-                self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 with open(self.main_path + self.tem_path_list[1] + f'/{i["dn"]}', 'wb') as f:
@@ -347,7 +328,6 @@ class Request:
             for i in self.per_list:
                 uid = i['df1']
                 url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
-                self.generate_header()
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 path = self.main_path + self.tem_path_list[2] + f"/{i['certiName']}"
@@ -389,7 +369,6 @@ class Request:
 
     def req_announcement(self) -> [list, list, list]:
         url = 'https://epf-mlife.k12ea.gov.tw/student.do'
-        self.generate_header()
         response = self.session_requests.post(
             url=url,
             headers=self.headers,
@@ -434,5 +413,3 @@ if __name__ == '__main__':
         'validateCode': '',
         'formToken': ''
     }
-    response = Request(Data)
-    s = response.login()

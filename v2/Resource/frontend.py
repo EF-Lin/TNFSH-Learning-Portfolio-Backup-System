@@ -6,7 +6,8 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from Resource.backend import Request
+# from Resource.backend import Request
+from backend import Request
 
 
 class Interface(Request):
@@ -122,7 +123,7 @@ class Interface(Request):
             with open(path_name, 'r') as f:
                 user_info = eval(f.read())
             self.data.update(user_info)
-            response = self.login()
+            response = self.login(2)
             if response == 'S':
                 try:
                     self.login_window.destroy()

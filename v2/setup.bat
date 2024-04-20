@@ -5,7 +5,6 @@ pip install bs4
 pip install requests
 pip install pytest-shutil
 pip install Pillow
-pip install fake_useragent
 pip install DateTime
 pip install dataclasses
 pip install tk
