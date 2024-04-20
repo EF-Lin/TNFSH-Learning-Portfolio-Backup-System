@@ -6,7 +6,6 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-# from Resource.backend import Request
 from backend import Request
 
 
@@ -130,6 +129,7 @@ class Interface(Request):
                 except:
                     pass
                 self.selection_window = tk.Tk()
+                self.selection_window.lift()
                 self.if_login = tk.StringVar()
                 self.if_login.set('是否登入:是')
                 self.show_selection_window()
@@ -328,6 +328,7 @@ class Show_subject_window:
             pyperclip.copy(copy_str)
 
         self.data = self.inter.load_data(self.i)
+        self.window.lift()
         self.tree = ttk.Treeview(
             self.window,
             show='headings',

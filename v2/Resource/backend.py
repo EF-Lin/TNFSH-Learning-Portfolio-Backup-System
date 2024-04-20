@@ -28,6 +28,8 @@ class Request:
     file_type = '.txt'
 
     def __init__(self, data: dict):
+        # vars
+        self.val_words = None
         # init path
         for i in range(1, len(self.tem_path_list)):
             self.tem_path_list[i] = os.path.normpath(self.tem_path_list[i])
@@ -91,7 +93,7 @@ class Request:
 
     def announcement(self) -> [bool, list, list, list] or [bool, str]:
         try:
-            return True, [self.req_announcement()]
+            return True, self.req_announcement()
         except re.exceptions.ConnectionError:
             return False, 'Please check your internet.'
         except Exception as ex:
@@ -185,16 +187,17 @@ class Request:
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
-    def ocr(self, img):
+    def ocr(self):
         import ddddocr
         OCR = ddddocr.DdddOcr(show_ad=False)
-        self.val_words = OCR.classification(img).lower()
+        # get validate photo
+        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
+        self.val_words = OCR.classification(base64.b64decode(response.text.split('\"')[3])).lower()
 
     def get_validate_photo(self):
         from PIL import ImageTk
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-        pic_url = response.text.split('\"')
-        tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(pic_url[3]))))
+        tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
         return tk_img
 
     def req_login(self, v: int):
@@ -205,12 +208,8 @@ class Request:
         # get token
         token = soup.find('input', {'name': 'formToken'})['value']
         self.data['formToken'] = token
-        # get validate photo
-        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-        pic_url = response.text.split('\"')
-        img = base64.b64decode(pic_url[3])
         if v == 2:
-            self.ocr(img)
+            self.ocr()
             self.data['validateCode'] = self.val_words
         response = self.session_requests.post(
             url=url,
@@ -220,7 +219,8 @@ class Request:
         html = str(response.text)
         a = html.find('帳號或密碼錯誤')
         b = html.find('驗證碼輸入錯誤')
-        if a == -1 and b == -1:
+        c = html.find('驗證碼錯誤！')
+        if a == -1 and b == -1 and c == -1:
             i = html.find("name=\"session_key\" value=") + 26
             # 以i為指針找到"""
             j = html.find("\"", i)
@@ -399,7 +399,7 @@ class Request:
                         deadline.append(False)
             else:
                 pass
-        return announcement, date, deadline
+        return [announcement, date, deadline]
 
 
 if __name__ == '__main__':

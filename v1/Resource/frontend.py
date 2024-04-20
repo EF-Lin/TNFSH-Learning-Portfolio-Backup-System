@@ -6,7 +6,6 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-# from Resource.backend import Request
 from backend import Request
 
 
@@ -128,7 +127,6 @@ class Interface(Request):
             self.data['validateCode'] = str(validate_entry.get())
             validate_window.destroy()
             self.validate_login()
-
         try:
             self.selection_window.destroy()
         except:
@@ -163,16 +161,16 @@ class Interface(Request):
             f = messagebox.askyesnocancel(title='錯誤',
                                           message=response + '\n連線錯誤，是否重試?')
             if f:
-                self.validate_login()
+                self.show_validate_window()
             else:
                 pass
         else:
             f = messagebox.askyesnocancel(title='錯誤',
                                           message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
             if f:
-                self.validate_login()
+                self.show_validate_window()
             else:
-                pass
+                self.show_login()
 
     def show_selection_window(self):
         def backup_all_and_show_message():
@@ -353,6 +351,7 @@ class Show_subject_window:
             pyperclip.copy(copy_str)
 
         self.data = self.inter.load_data(self.i)
+        self.window.lift()
         self.tree = ttk.Treeview(
             self.window,
             show='headings',
