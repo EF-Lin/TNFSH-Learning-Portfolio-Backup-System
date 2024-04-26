@@ -19,6 +19,30 @@ class Request:
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
+    cadre_cols = {
+        'syear': '學年',
+        'seme': '學期',
+        'title': '幹部名稱',
+        # 'unit': '單位',
+        'kind': '類別',
+        'beginDt': '開始日期',
+        'endDt': '結束日期',
+    }
+    course_cols = {
+        'syear': '學年',
+        'seme': '學期',
+        'subjCname': '學科',
+        'dn': '檔案名稱',
+        'brief': '成果簡述',
+        'verifyM': '是否驗證',
+    }
+    per_cols = {
+        'syear': '學年',
+        'seme': '學期',
+        'tickSyear': '勾選學年',
+        'certiName': '檔案名稱',
+        'brief': '成果簡述',
+    }
     headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36(KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'}
     file_list = []
     cadre_ex_list = []
@@ -26,8 +50,13 @@ class Request:
     per_list = []
     tem_list = []
     file_type = '.txt'
+    font_title_1 = 'Microsoft_JhengHei 18 bold'
+    font_title_2 = 'Microsoft_JhengHei 18'
+    font_text_1 = 'Microsoft_JhengHei 12 bold'
+    font_text_2 = 'Microsoft_JhengHei 12'
+    font_button = 'Microsoft_JhengHei 15'
 
-    def __init__(self, data: dict):
+    def __init__(self):
         # vars
         self.val_words = None
         # init path
@@ -38,7 +67,14 @@ class Request:
         # info
         self.init_folders()
         self.init_texts()
-        self.data = data
+        self.data = {
+            'city': '12',
+            'schNo': '210305.國立台南第一高級中學',
+            'loginId': '',
+            'password': '',
+            'validateCode': '',
+            'formToken': ''
+        }
         # create session
         self.session_requests = re.session()
         #self.login()

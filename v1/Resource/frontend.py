@@ -6,62 +6,27 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from backend import Request
+from v2.Resource.backend import Request
 
 
-class Interface(Request):
-    """主介面"""
+class Login(Request):
     city = '12'
     schNo = '210305.國立台南第一高級中學'
-    cadre_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'title': '幹部名稱',
-        # 'unit': '單位',
-        'kind': '類別',
-        'beginDt': '開始日期',
-        'endDt': '結束日期',
-    }
-    course_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'subjCname': '學科',
-        'dn': '檔案名稱',
-        'brief': '成果簡述',
-        'verifyM': '是否驗證',
-    }
-    per_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'tickSyear': '勾選學年',
-        'certiName': '檔案名稱',
-        'brief': '成果簡述',
-    }
-    """
-        '': '',
-        '': '',
-        '': '',
-        '': ''
-    """
-    font_title_1 = 'Microsoft_JhengHei 18 bold'
-    font_title_2 = 'Microsoft_JhengHei 18'
-    font_text_1 = 'Microsoft_JhengHei 12 bold'
-    font_text_2 = 'Microsoft_JhengHei 12'
-    font_button = 'Microsoft_JhengHei 15'
 
     def __init__(self):
+        # init
+        super().__init__()
+        # datas
         self.data = {
             'city': self.city,
             'schNo': self.schNo,
             'validateCode': '',
             'formToken': ''
         }
-        # windows
-        self.selection_window: tk.Tk() = None
-        # bools
-        self.if_login = None
-        # 初始化
-        super().__init__(self.data)
+        # user info
+        self.user_info_path = self.main_path + self.path_list[3] + self.file_type
+        self.if_login = False
+        self.login_window: tk.Tk() = None
         self.check_login_data()
 
     def __str__(self) -> str:
@@ -72,7 +37,7 @@ class Interface(Request):
             loginId = loginId_entry.get()
             password = password_entry.get()
             self.init_user_info(loginId, password)
-            login_window.destroy()
+            self.login_window.destroy()
             self.show_validate_window()
 
         def check():
@@ -81,27 +46,27 @@ class Interface(Request):
             else:
                 password_entry.config(show='*')
 
-        login_window = tk.Tk()
-        login_window.geometry('300x200')
-        login_window.title('台南一中學習歷程備份系統')
-        login_window.iconbitmap('icon.ico')
-        loginId_label = tk.Label(login_window, text='帳號：', font=self.font_text_2)
+        self.login_window = tk.Tk()
+        self.login_window.geometry('300x200')
+        self.login_window.title('台南一中學習歷程備份系統')
+        self.login_window.iconbitmap('icon.ico')
+        loginId_label = tk.Label(self.login_window, text='帳號：', font=self.font_text_2)
         loginId_label.pack()
-        loginId_entry = tk.Entry(login_window, width=30)
+        loginId_entry = tk.Entry(self.login_window, width=30)
         loginId_entry.pack()
         v = tk.BooleanVar()
         v.set(False)
-        password_label = tk.Label(login_window, text='密碼：', font=self.font_text_2)
+        password_label = tk.Label(self.login_window, text='密碼：', font=self.font_text_2)
         password_label.pack()
-        password_entry = tk.Entry(login_window, show='*', width=30)
+        password_entry = tk.Entry(self.login_window, show='*', width=30)
         password_entry.pack()
-        password_check = tk.Checkbutton(login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
+        password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
         password_check.pack()
-        login_button = tk.Button(login_window, text='登入', command=login, font=self.font_text_2)
+        login_button = tk.Button(self.login_window, text='登入', command=login, font=self.font_text_2)
         login_button.pack()
-        developer_label = tk.Label(login_window, text='Developed by EFLin')
+        developer_label = tk.Label(self.login_window, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
-        login_window.mainloop()
+        self.login_window.mainloop()
 
     def init_user_info(self, loginId: str, password: str):
         path = self.main_path + self.path_list[3] + self.file_type
@@ -114,13 +79,7 @@ class Interface(Request):
     def check_login_data(self):
         path_name = self.main_path + self.path_list[3] + self.file_type
         f = os.path.exists(path_name)
-        if not f:
-            self.show_login()
-        else:
-            self.selection_window = tk.Tk()
-            self.if_login = tk.StringVar()
-            self.if_login.set('是否登入:否')
-            self.show_selection_window()
+        self.show_login() if not f else 0
 
     def show_validate_window(self):
         def check_validate():
@@ -152,25 +111,39 @@ class Interface(Request):
         self.data.update(user_info)
         response = self.login(1)
         if response == 'S':
+            try:
+                self.login_window.destroy()
+            except:
+                pass
             messagebox.showinfo('訊息', '登入成功')
-            self.selection_window = tk.Tk()
-            self.if_login = tk.StringVar()
-            self.if_login.set('是否登入:是')
-            self.show_selection_window()
-        elif response == 'ConnectionError: Please check your internet.':
+            self.if_login = True
+        elif response == 'Please check your internet.':
             f = messagebox.askyesnocancel(title='錯誤',
                                           message=response + '\n連線錯誤，是否重試?')
-            if f:
-                self.show_validate_window()
-            else:
-                pass
+            self.show_validate_window() if f else 0
         else:
             f = messagebox.askyesnocancel(title='錯誤',
                                           message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
-            if f:
-                self.show_validate_window()
-            else:
-                self.show_login()
+            self.show_validate_window() if f else self.show_login()
+
+
+class Interface(Login):
+    """主介面"""
+    city = '12'
+    schNo = '210305.國立台南第一高級中學'
+
+    def __init__(self, v: int):
+        super().__init__()
+        self.v = v
+        # windows
+        self.selection_window = tk.Tk()
+        self.selection_window.lift()
+        self.if_login_str = tk.StringVar()
+        self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
+        self.show_selection_window()
+
+    def __str__(self) -> str:
+        return 'This is a interface'
 
     def show_selection_window(self):
         def backup_all_and_show_message():
@@ -194,15 +167,10 @@ class Interface(Request):
             yes = messagebox.askyesno(title='警告', message='此舉將刪除所有已備份文件、紀錄，並且不可回復!!!')
             if yes:
                 check = simpledialog.askstring(title='確認', prompt='請輸入\"delete\"刪除所有已備份文件、紀錄。')
-                if check == 'delete':
-                    self.delete_all_files()
-                else:
-                    pass
-            else:
-                pass
+                self.delete_all_files() if check == 'delete' else 0
 
         def create_subject_window(i: int):
-            Show_subject_window(inter=self, i=i)
+            Subject_window(inter=self, i=i)
 
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
@@ -241,7 +209,7 @@ class Interface(Request):
                                          command=delete_backup, width=w, height=h)
         delete_backup_button.grid(row=4, column=1, sticky='nw')
         frame = tk.Frame(self.selection_window)
-        if_login_label = tk.Label(frame, textvariable=self.if_login)
+        if_login_label = tk.Label(frame, textvariable=self.if_login_str)
         if_login_label.pack()
         developer_label = tk.Label(frame, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
@@ -291,7 +259,7 @@ class Interface(Request):
 
 
 @dataclass
-class Show_subject_window:
+class Subject_window:
     """子視窗"""
     inter: Interface
     i: int
@@ -452,4 +420,4 @@ class Covert:
 
 
 if __name__ == '__main__':
-    interface = Interface()
+    interface = Interface(1)

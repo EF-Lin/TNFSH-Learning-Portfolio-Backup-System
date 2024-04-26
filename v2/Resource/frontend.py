@@ -9,66 +9,29 @@ import os
 from backend import Request
 
 
-class Interface(Request):
-    """主介面"""
+class Login(Request):
     city = '12'
     schNo = '210305.國立台南第一高級中學'
-    cadre_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'title': '幹部名稱',
-        # 'unit': '單位',
-        'kind': '類別',
-        'beginDt': '開始日期',
-        'endDt': '結束日期',
-    }
-    course_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'subjCname': '學科',
-        'dn': '檔案名稱',
-        'brief': '成果簡述',
-        'verifyM': '是否驗證',
-    }
-    per_cols = {
-        'syear': '學年',
-        'seme': '學期',
-        'tickSyear': '勾選學年',
-        'certiName': '檔案名稱',
-        'brief': '成果簡述',
-    }
-    """
-        '': '',
-        '': '',
-        '': '',
-        '': ''
-    """
-    font_title_1 = 'Microsoft_JhengHei 18 bold'
-    font_title_2 = 'Microsoft_JhengHei 18'
-    font_text_1 = 'Microsoft_JhengHei 12 bold'
-    font_text_2 = 'Microsoft_JhengHei 12'
-    font_button = 'Microsoft_JhengHei 15'
 
     def __init__(self):
+        # init
+        super().__init__()
         self.data = {
             'city': self.city,
             'schNo': self.schNo,
             'validateCode': '',
             'formToken': ''
         }
-        # windows
-        self.selection_window = None
-        self.login_window = None
-        # bools
-        self.if_login = None
-        # 初始化
-        super().__init__(self.data)
+        # user info
+        self.user_info_path = self.main_path + self.path_list[3] + self.file_type
+        self.login_window: tk.Tk() = None
+        self.if_login = False
         r: bool = self.check_login_data()
         if r == False:
             self.show_login()
 
     def __str__(self) -> str:
-        return 'This is a interface'
+        return 'v2 login'
 
     def show_login(self):
         def login():
@@ -78,10 +41,7 @@ class Interface(Request):
             self.check_login_data()
 
         def check():
-            if v.get():
-                password_entry.config(show='')
-            else:
-                password_entry.config(show='*')
+            password_entry.config(show='') if v.get() else password_entry.config(show='*')
 
         self.login_window = tk.Tk()
         self.login_window.geometry('300x200')
@@ -97,7 +57,8 @@ class Interface(Request):
         password_label.pack()
         password_entry = tk.Entry(self.login_window, show='*', width=30)
         password_entry.pack()
-        password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
+        password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check,
+                                        font=self.font_text_2)
         password_check.pack()
         login_button = tk.Button(self.login_window, text='登入', command=login, font=self.font_text_2)
         login_button.pack()
@@ -106,53 +67,57 @@ class Interface(Request):
         self.login_window.mainloop()
 
     def init_user_info(self, loginId: str, password: str):
-        path = self.main_path + self.path_list[3] + self.file_type
         user_info = {
             'loginId': loginId,
             'password': password,
         }
-        self.generate_text(path, user_info)
+        self.generate_text(self.user_info_path, user_info)
 
     def check_login_data(self) -> bool or None:
-        path_name = self.main_path + self.path_list[3] + self.file_type
-        f = os.path.exists(path_name)
-        if not f:
-            self.show_login()
-        else:
-            with open(path_name, 'r') as f:
-                user_info = eval(f.read())
-            self.data.update(user_info)
-            response = self.login(2)
-            if response == 'S':
-                try:
-                    self.login_window.destroy()
-                except:
-                    pass
-                self.selection_window = tk.Tk()
-                self.selection_window.lift()
-                self.if_login = tk.StringVar()
-                self.if_login.set('是否登入:是')
-                self.show_selection_window()
-            elif response == 'ConnectionError: Please check your internet.':
-                f = messagebox.askyesnocancel(title='錯誤',
-                                              message=f'{response}\n連線錯誤，是否重試?\n點擊「否」將進入選單介面，並在離線模式下運行系統。')
-                if f:
-                    self.check_login_data()
-                    return True
-                elif f is False:
-                    self.selection_window = tk.Tk()
-                    self.if_login = tk.StringVar()
-                    self.if_login.set('是否登入:是')
-                    self.show_selection_window()
-                else:
-                    return True
+        f = os.path.exists(self.user_info_path)
+        self.show_login() if not f else self.normal_login()
+
+    def normal_login(self):
+        with open(self.user_info_path, 'r') as f:
+            user_info = eval(f.read())
+        self.data.update(user_info)
+        response = self.login(2)
+        if response == 'S':
+            try:
+                self.login_window.destroy()
+            except:
+                pass
+            self.if_login = True
+        elif response == 'Please check your internet.':
+            f = messagebox.askyesnocancel(title='錯誤',
+                                          message=f'{response}\n連線錯誤，是否重試?\n點擊「否」將進入選單介面，並在離線模式下運行系統。')
+            if f:
+                self.check_login_data()
+                return True
+            elif f is False:
+                self.if_login = False
             else:
-                f = messagebox.askyesnocancel(title='錯誤',
-                                              message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
-                if f:
-                    self.check_login_data()
-                else:
-                    return False
+                return True
+        else:
+            f = messagebox.askyesnocancel(title='錯誤',
+                                          message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
+            return False if not f else self.normal_login()
+
+
+class Main_interface(Login):
+    """主介面"""
+    def __init__(self, v: int):
+        super().__init__()
+        self.v = v
+        # windows
+        self.selection_window = tk.Tk()
+        self.selection_window.lift()
+        self.if_login_str = tk.StringVar()
+        self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
+        self.show_selection_window()
+
+    def __str__(self) -> str:
+        return 'This is a interface'
 
     def show_selection_window(self):
         def backup_all_and_show_message():
@@ -168,22 +133,15 @@ class Interface(Request):
             if yes:
                 self.selection_window.destroy()
                 self.show_login()
-            else:
-                pass
 
         def delete_backup():
             yes = messagebox.askyesno(title='警告', message='此舉將刪除所有已備份文件、紀錄，並且不可回復!!!')
             if yes:
                 check = simpledialog.askstring(title='確認', prompt='請輸入\"delete\"刪除所有已備份文件、紀錄。')
-                if check == 'delete':
-                    self.delete_all_files()
-                else:
-                    pass
-            else:
-                pass
+                self.delete_all_files() if check == 'delete' else 0
 
         def create_subject_window(i: int):
-            Show_subject_window(inter=self, i=i)
+            Subject_window(inter=self, i=i)
 
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
@@ -218,26 +176,12 @@ class Interface(Request):
                                          command=delete_backup, width=w, height=h)
         delete_backup_button.grid(row=3, column=1, sticky='nw')
         frame = tk.Frame(self.selection_window)
-        if_login_label = tk.Label(frame, textvariable=self.if_login)
+        if_login_label = tk.Label(frame, textvariable=self.if_login_str)
         if_login_label.pack()
         developer_label = tk.Label(frame, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
         frame.grid(column=1)
         self.selection_window.mainloop()
-
-    def load_data(self, i: int) -> list:
-        try:
-            path = self.main_path + self.path_list[i] * 2 + self.file_type
-            with open(path, 'r', encoding="utf-8") as f:
-                d = eval(f.read())
-            return d
-        except SyntaxError:
-            # SyntaxError: Please backup first.
-            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
-            return []
-        except Exception as ex:
-            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
-            return []
 
     def show_anno(self):
         successful, data = self.announcement()
@@ -268,9 +212,9 @@ class Interface(Request):
 
 
 @dataclass
-class Show_subject_window:
+class Subject_window():
     """子視窗"""
-    inter: Interface
+    inter: Main_interface
     i: int
     data: list = None
 
@@ -303,6 +247,20 @@ class Show_subject_window:
         self.create_tree_data()
         self.window.mainloop()
 
+    def load_data(self, i: int) -> list:
+        try:
+            path = self.inter.main_path + self.inter.path_list[i] * 2 + self.inter.file_type
+            with open(path, 'r', encoding="utf-8") as f:
+                d = eval(f.read())
+            return d
+        except SyntaxError:
+            # SyntaxError: Please backup first.
+            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
+            return []
+        except Exception as ex:
+            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
+            return []
+
     def backup_and_show_message(self) -> bool:
         s = self.inter.backup(self.i)
         if s == 'S':
@@ -327,7 +285,7 @@ class Show_subject_window:
                 copy_str += f'{j}: {str(i)}\n'
             pyperclip.copy(copy_str)
 
-        self.data = self.inter.load_data(self.i)
+        self.data = self.load_data(self.i)
         self.window.lift()
         self.tree = ttk.Treeview(
             self.window,
@@ -354,13 +312,11 @@ class Show_subject_window:
         if successful:
             self.tree.destroy()
             self.create_tree_data()
-        else:
-            pass
 
 
 class Covert:
     """轉檔視窗"""
-    def __init__(self, inter: Interface):
+    def __init__(self, inter: Main_interface):
         self.inter = inter
         self.files: tuple = ()
         self.img_size: list = []
@@ -422,11 +378,10 @@ class Covert:
                                                                name=self.file_name.get(),
                                                                size=size)
             if covert_successful:
-                # messagebox.showinfo(title='訊息', message='轉換成功')
                 os.startfile(self.inter.main_path)
             else:
                 messagebox.showerror(title='錯誤', message=f'{covert_successful}\n轉換失敗。')
 
 
 if __name__ == '__main__':
-    interface = Interface()
+    interface = Main_interface()
