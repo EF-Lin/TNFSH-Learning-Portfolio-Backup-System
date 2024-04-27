@@ -6,45 +6,46 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-from v2.Resource.backend import Request
+from Resource.backend import Request
 
 
-class Login(Request):
+class Main_interface(Request):
+    """主介面"""
     city = '12'
     schNo = '210305.國立台南第一高級中學'
 
-    def __init__(self):
+    def __init__(self, v: int):
+        self.v = v
         # init
         super().__init__()
-        # datas
         self.data = {
             'city': self.city,
             'schNo': self.schNo,
             'validateCode': '',
             'formToken': ''
         }
+        # vars
+        self.login_window: tk.Tk() = None
+        self.selection_window: tk.Tk() = None
+        self.if_login_str: tk.StringVar() = None
+        self.if_login = False
         # user info
         self.user_info_path = self.main_path + self.path_list[3] + self.file_type
-        self.if_login = False
-        self.login_window: tk.Tk() = None
-        self.check_login_data()
+        # run
+        self.check_user_data()
 
     def __str__(self) -> str:
-        return 'This is a interface'
+        return 'This is the main interface'
 
     def show_login(self):
         def login():
             loginId = loginId_entry.get()
             password = password_entry.get()
             self.init_user_info(loginId, password)
-            self.login_window.destroy()
-            self.show_validate_window()
+            self.show_validate_window() if self.v == 1 else self.check_user_data()
 
         def check():
-            if v.get():
-                password_entry.config(show='')
-            else:
-                password_entry.config(show='*')
+            password_entry.config(show='') if v.get() else password_entry.config(show='*')
 
         self.login_window = tk.Tk()
         self.login_window.geometry('300x200')
@@ -60,7 +61,8 @@ class Login(Request):
         password_label.pack()
         password_entry = tk.Entry(self.login_window, show='*', width=30)
         password_entry.pack()
-        password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check, font=self.font_text_2)
+        password_check = tk.Checkbutton(self.login_window, text='顯示密碼', variable=v, height=2, command=check,
+                                        font=self.font_text_2)
         password_check.pack()
         login_button = tk.Button(self.login_window, text='登入', command=login, font=self.font_text_2)
         login_button.pack()
@@ -68,89 +70,141 @@ class Login(Request):
         developer_label.pack(side='bottom', anchor='e')
         self.login_window.mainloop()
 
-    def init_user_info(self, loginId: str, password: str):
-        path = self.main_path + self.path_list[3] + self.file_type
-        user_info = {
-            'loginId': loginId,
-            'password': password,
-        }
-        self.generate_text(path, user_info)
-
-    def check_login_data(self):
-        path_name = self.main_path + self.path_list[3] + self.file_type
-        f = os.path.exists(path_name)
-        self.show_login() if not f else 0
-
     def show_validate_window(self):
         def check_validate():
             self.data['validateCode'] = str(validate_entry.get())
             validate_window.destroy()
-            self.validate_login()
-        try:
-            self.selection_window.destroy()
-        except:
-            pass
-        validate_window = tk.Tk()
-        validate_window.title('驗證碼')
-        validate_window.geometry('300x200')
-        validate_window.iconbitmap('icon.ico')
-        img = self.get_validate_photo()
-        validate_label = tk.Label(validate_window, image=img)
-        validate_label.pack()
-        validate_title = tk.Label(validate_window, text='請輸入驗證碼')
-        validate_title.pack()
-        validate_entry = tk.Entry(validate_window)
-        validate_entry.pack()
-        validate_button = tk.Button(validate_window, text='確認', command=check_validate, width=5, height=2)
-        validate_button.pack()
-        validate_window.mainloop()
+            self.try_login()
 
-    def validate_login(self) -> bool or None:
-        with open(self.main_path + self.path_list[3] + self.file_type, 'r') as f:
+        img = self.get_validate_photo()
+        if img == 'Please check your internet.':
+            messagebox.showerror(title='錯誤', message=img)
+        else:
+            validate_window = tk.Toplevel()
+            validate_window.title('驗證碼')
+            validate_window.geometry('300x200')
+            validate_window.iconbitmap('icon.ico')
+            validate_label = tk.Label(validate_window, image=img)
+            validate_label.pack()
+            validate_title = tk.Label(validate_window, text='請輸入驗證碼')
+            validate_title.pack()
+            validate_entry = tk.Entry(validate_window)
+            validate_entry.pack()
+            validate_button = tk.Button(validate_window, text='確認', command=check_validate, width=5, height=2)
+            validate_button.pack()
+            validate_window.mainloop()
+
+    def init_user_info(self, loginId: str, password: str):
+        user_info = {
+            'loginId': loginId,
+            'password': password,
+        }
+        self.generate_text(self.user_info_path, user_info)
+
+    def check_user_data(self) -> bool or None:
+        f = os.path.exists(self.user_info_path)
+        if not f:
+            self.show_login()
+        elif f and self.v == 1:
+            self.show_selection_window()
+        else:
+            self.try_login()
+
+    def try_login(self):
+        with open(self.user_info_path, 'r') as f:
             user_info = eval(f.read())
         self.data.update(user_info)
-        response = self.login(1)
+        response = self.login(self.v)
         if response == 'S':
-            try:
-                self.login_window.destroy()
-            except:
-                pass
-            messagebox.showinfo('訊息', '登入成功')
             self.if_login = True
-        elif response == 'Please check your internet.':
+            if self.v == 1:
+                messagebox.showinfo(title='訊息', message='登入成功')
+                try:
+                    self.login_window.destroy()
+                    self.show_selection_window()
+                except:
+                    self.if_login_str.set('是否登入:是')
+            else:
+                self.show_selection_window()
+        elif response == 'ConnectionError':
             f = messagebox.askyesnocancel(title='錯誤',
-                                          message=response + '\n連線錯誤，是否重試?')
-            self.show_validate_window() if f else 0
+                                          message='連線錯誤，是否重試?',
+                                          detail='點擊「是」重新嘗試登入，點擊「否」進入選單介面，在離線模式下運行系統。')
+            if self.v == 1 and f:
+                self.show_validate_window()
+            elif self.v == 2 and f:
+                self.try_login()
+            elif f is False:
+                try:
+                    self.login_window.destroy()
+                except:
+                    pass
+                self.if_login = False
+                self.show_selection_window()
+            else:
+                pass
+        elif response == 'AccountOrPasswordError':
+            f = messagebox.askyesnocancel(title='錯誤',
+                                          message='帳號或密碼錯誤，是否重新輸入?',
+                                          detail='點擊「是」重新輸入，點擊「否」進入選單介面，在離線模式下運行系統。')
+            if f:
+                self.show_login()
+            elif f is False:
+                try:
+                    self.login_window.destroy()
+                except:
+                    pass
+                self.if_login = False
+                self.show_selection_window()
+            else:
+                pass
+        elif response == 'ValidateError' and self.v == 1:
+            f = messagebox.askyesnocancel(title='錯誤',
+                                          message='驗證碼錯誤，是否重新輸入?',
+                                          detail='點擊「是」重新輸入，點擊「否」進入選單介面，在離線模式下運行系統。')
+            if f:
+                self.show_validate_window()
+            elif f is False:
+                self.if_login = False
+                self.show_selection_window()
+            else:
+                pass
+        elif response == 'ValidateError' and self.v == 2:
+            f = messagebox.askyesnocancel(title='錯誤',
+                                          message='驗證碼錯誤，請重新嘗試。',
+                                          detail='點擊「是」重新嘗試，點擊「否」進入選單介面，在離線模式下運行系統。')
+            if f:
+                self.try_login()
+            elif f is False:
+                try:
+                    self.login_window.destroy()
+                except:
+                    pass
+                self.if_login = False
+                self.show_selection_window()
+            else:
+                pass
         else:
             f = messagebox.askyesnocancel(title='錯誤',
-                                          message=response + '\n點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。')
-            self.show_validate_window() if f else self.show_login()
-
-
-class Interface(Login):
-    """主介面"""
-    city = '12'
-    schNo = '210305.國立台南第一高級中學'
-
-    def __init__(self, v: int):
-        super().__init__()
-        self.v = v
-        # windows
-        self.selection_window = tk.Tk()
-        self.selection_window.lift()
-        self.if_login_str = tk.StringVar()
-        self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
-        self.show_selection_window()
-
-    def __str__(self) -> str:
-        return 'This is a interface'
+                                          message='點擊「是」重新嘗試登入，點擊「否」重新輸入帳號密碼。',
+                                          detail=response)
+            if f and self.v == 1:
+                self.show_validate_window()
+            elif f and self.v == 2:
+                self.try_login()
+            elif f is False:
+                self.show_login()
+            else:
+                pass
 
     def show_selection_window(self):
         def backup_all_and_show_message():
             s = self.backup_all()
             if s:
+                message = []
                 for j in s:
-                    messagebox.showerror('錯誤', j)
+                    0 if j in message else messagebox.showerror(title='錯誤', message=j)
+                    message.append(j)
             else:
                 messagebox.showinfo('訊息', '備份成功')
 
@@ -158,10 +212,7 @@ class Interface(Login):
             yes = messagebox.askyesno(title='警告', message='是否要重新輸入帳號密碼?')
             if yes:
                 self.selection_window.destroy()
-                self.k = True
                 self.show_login()
-            else:
-                pass
 
         def delete_backup():
             yes = messagebox.askyesno(title='警告', message='此舉將刪除所有已備份文件、紀錄，並且不可回復!!!')
@@ -172,63 +223,54 @@ class Interface(Login):
         def create_subject_window(i: int):
             Subject_window(inter=self, i=i)
 
+        self.selection_window = tk.Tk()
+        self.if_login_str = tk.StringVar()
+        self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
-        self.selection_window.iconbitmap(default='icon.ico')
-        self.selection_window.rowconfigure((0, 1, 2, 3, 4), weight=1)
+        self.selection_window.iconbitmap('icon.ico')
+        rows = [i for i in range(6 - self.v)]
+        self.selection_window.rowconfigure(tuple(rows), weight=1)
         self.selection_window.columnconfigure((0, 1), weight=1)
         w = 8
         h = 3
-        covert = Covert(self)
-
-        login_button = tk.Button(self.selection_window, text='登入', font=self.font_button,
-                                 command=self.show_validate_window, width=16, height=2)
-        login_button.grid(row=0, column=0, columnspan=2, sticky='n')
+        covert = Covert()
         announcement_button = tk.Button(self.selection_window, text='公告', font=self.font_button,
                                         command=self.show_anno, width=w, height=h)
-        announcement_button.grid(row=1, column=0, sticky='se')
+        announcement_button.grid(row=0, column=0, sticky='se')
         cadre_button = tk.Button(self.selection_window, text='幹部經歷', font=self.font_button,
                                  command=lambda: create_subject_window(0), width=w, height=h)
-        cadre_button.grid(row=1, column=1, sticky='sw')
+        cadre_button.grid(row=0, column=1, sticky='sw')
         course_ach_button = tk.Button(self.selection_window, text='學習成果', font=self.font_button,
                                       command=lambda: create_subject_window(1), width=w, height=h)
-        course_ach_button.grid(row=2, column=0, sticky='e')
+        course_ach_button.grid(row=1, column=0, sticky='e')
         per_button = tk.Button(self.selection_window, text='多元表現', font=self.font_button,
                                command=lambda: create_subject_window(2), width=w, height=h)
-        per_button.grid(row=2, column=1, sticky='w')
+        per_button.grid(row=1, column=1, sticky='w')
         backup_button = tk.Button(self.selection_window, text='備份', font=self.font_button,
                                   command=backup_all_and_show_message, width=w, height=h)
-        backup_button.grid(row=3, column=0, sticky='e')
+        backup_button.grid(row=2, column=0, sticky='e')
         covert_img_button = tk.Button(self.selection_window, text='轉檔工具', font=self.font_button,
                                       command=covert.show_covert_img, width=w, height=h)
-        covert_img_button.grid(row=3, column=1, sticky='w')
+        covert_img_button.grid(row=2, column=1, sticky='w')
         relogin_button = tk.Button(self.selection_window, text='重新登入', font=self.font_button,
                                    command=reset, width=w, height=h)
-        relogin_button.grid(row=4, column=0, sticky='ne')
+        relogin_button.grid(row=3, column=0, sticky='ne')
         delete_backup_button = tk.Button(self.selection_window, text='刪除備份', font=self.font_button,
                                          command=delete_backup, width=w, height=h)
-        delete_backup_button.grid(row=4, column=1, sticky='nw')
+        delete_backup_button.grid(row=3, column=1, sticky='nw')
+        if self.v == 1:
+            login_button = tk.Button(self.selection_window, text='登入', font=self.font_button,
+                                     command=self.show_validate_window, width=16, height=2)
+            login_button.grid(row=4, column=0, columnspan=2, sticky='n')
         frame = tk.Frame(self.selection_window)
         if_login_label = tk.Label(frame, textvariable=self.if_login_str)
         if_login_label.pack()
         developer_label = tk.Label(frame, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
         frame.grid(column=1)
+        self.selection_window.lift()
         self.selection_window.mainloop()
-
-    def load_data(self, i: int) -> list:
-        try:
-            path = self.main_path + self.path_list[i] * 2 + self.file_type
-            with open(path, 'r', encoding="utf-8") as f:
-                d = eval(f.read())
-            return d
-        except SyntaxError:
-            # SyntaxError: Please backup first.
-            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
-            return []
-        except Exception as ex:
-            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
-            return []
 
     def show_anno(self):
         successful, data = self.announcement()
@@ -261,7 +303,7 @@ class Interface(Login):
 @dataclass
 class Subject_window:
     """子視窗"""
-    inter: Interface
+    inter: Main_interface
     i: int
     data: list = None
 
@@ -294,6 +336,20 @@ class Subject_window:
         self.create_tree_data()
         self.window.mainloop()
 
+    def load_data(self, i: int) -> list:
+        try:
+            path = self.inter.main_path + self.inter.path_list[i] * 2 + self.inter.file_type
+            with open(path, 'r', encoding="utf-8") as f:
+                d = eval(f.read())
+            return d
+        except SyntaxError:
+            # SyntaxError: Please backup first.
+            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
+            return []
+        except Exception as ex:
+            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
+            return []
+
     def backup_and_show_message(self) -> bool:
         s = self.inter.backup(self.i)
         if s == 'S':
@@ -318,7 +374,7 @@ class Subject_window:
                 copy_str += f'{j}: {str(i)}\n'
             pyperclip.copy(copy_str)
 
-        self.data = self.inter.load_data(self.i)
+        self.data = self.load_data(self.i)
         self.window.lift()
         self.tree = ttk.Treeview(
             self.window,
@@ -345,14 +401,12 @@ class Subject_window:
         if successful:
             self.tree.destroy()
             self.create_tree_data()
-        else:
-            pass
 
 
-class Covert:
+@dataclass
+class Covert(Request):
     """轉檔視窗"""
-    def __init__(self, inter: Interface):
-        self.inter = inter
+    def __post_init__(self):
         self.files: tuple = ()
         self.img_size: list = []
 
@@ -384,7 +438,7 @@ class Covert:
 
     def select_images(self):
         self.files = filedialog.askopenfilenames(parent=self.show_covert_img_window, title='請選擇圖片',
-                                                 filetypes=[('image files', '*.png;*.jpg;*.jpeg')])
+                                                 filetypes=[('image files', '.png;*.jpg;*.jpeg')])
         self.frame.pack_forget()
         self.frame = tk.Frame(self.show_covert_img_window)
         self.img_size = [tk.IntVar() for _ in range(len(self.files))]
@@ -409,15 +463,16 @@ class Covert:
             size = []
             for i in range(len(self.img_size)):
                 size.append(self.img_size[i].get())
-            covert_successful = self.inter.covert_image_to_pdf(files=self.files,
+            covert_successful = self.covert_image_to_pdf(files=self.files,
                                                                name=self.file_name.get(),
                                                                size=size)
             if covert_successful:
-                # messagebox.showinfo(title='訊息', message='轉換成功')
-                os.startfile(self.inter.main_path)
+                os.startfile(self.main_path)
             else:
                 messagebox.showerror(title='錯誤', message=f'{covert_successful}\n轉換失敗。')
 
 
 if __name__ == '__main__':
-    interface = Interface(1)
+    #version = int(input())
+    version = 1
+    interface = Main_interface(version)

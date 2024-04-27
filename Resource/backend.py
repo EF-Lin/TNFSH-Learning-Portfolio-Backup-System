@@ -15,7 +15,7 @@ class Request:
     """爬資料"""
     # info
     # main_path = '.\\files'
-    main_path = os.path.normpath('./files')
+    main_path = os.path.normpath('files')
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
@@ -58,6 +58,7 @@ class Request:
 
     def __init__(self):
         # vars
+        self.key = None
         self.val_words = None
         # init path
         for i in range(1, len(self.tem_path_list)):
@@ -123,7 +124,7 @@ class Request:
         try:
             return self.req_login(v)
         except re.exceptions.ConnectionError:
-            return 'Please check your internet.'
+            return 'ConnectionError'
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
@@ -132,6 +133,8 @@ class Request:
             return True, self.req_announcement()
         except re.exceptions.ConnectionError:
             return False, 'Please check your internet.'
+        except AttributeError:
+            return False, 'Please login first.'
         except Exception as ex:
             return False, f'Unknown Error.\n{str(ex)}'
 
@@ -166,60 +169,13 @@ class Request:
                 self.replace_folder(2)
             return 'S'
         except json.decoder.JSONDecodeError:
-            # f"JSONDecodeError: Backup {name[i]} failed, please try again."
             return f"Backup {name[i]} failed, please try again."
         except FileNotFoundError:
             return f"{name[i]}.txt is not exist."
         except re.exceptions.ConnectionError:
-            # f'ConnectionError: Backup {name[i]} failed, please check your internet.'
             return f'Backup {name[i]} failed, please check your internet.'
-        except Exception as ex:
-            return f'Unknown Error.\n{str(ex)}\n'
-
-    def backup_cadre_ex(self) -> str:
-        try:
-            asyncio.run(self.cadre_experience())
-            return "S"
-        except json.decoder.JSONDecodeError:
-            # "JSONDecodeError: Backup cadre experiment failed, please try again."
-            return "Backup cadre experiment failed, please try again."
-        except re.exceptions.ConnectionError:
-            # 'ConnectionError: Backup cadre experiment failed, please check your internet.'
-            return 'Backup cadre experiment failed, please check your internet.'
-        except Exception as ex:
-            return f'Unknown Error.\n{str(ex)}\n'
-
-    def backup_course_ach(self) -> str:
-        try:
-            asyncio.run(self.course_achievement())
-            asyncio.run(self.download_course_ach())
-            self.replace_folder(1)
-            return "S"
-        except FileNotFoundError:
-            return "course_achievement.txt is not exist."
-        except json.decoder.JSONDecodeError:
-            # "JSONDecodeError: Backup course achievements failed, please try again."
-            return "Backup course achievements failed, please try again."
-        except re.exceptions.ConnectionError:
-            # 'ConnectionError: Backup course achievements failed, please check your internet.'
-            return 'Backup course achievements failed, please check your internet.'
-        except Exception as ex:
-            return f'Unknown Error.\n{str(ex)}\n'
-
-    def backup_per(self) -> str:
-        try:
-            asyncio.run(self.performers())
-            asyncio.run(self.download_per())
-            self.replace_folder(2)
-            return "S"
-        except FileNotFoundError:
-            return "FileNotFoundError: Performers.txt is not exist."
-        except json.decoder.JSONDecodeError:
-            # "JSONDecodeError: Backup performers failed, please try again."
-            return "Backup performers failed, please try again."
-        except re.exceptions.ConnectionError:
-            # 'ConnectionError: Backup performers failed, please check your internet.'
-            return 'Backup performers failed, please check your internet.'
+        except AttributeError:
+            return 'Please login first.'
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
@@ -231,10 +187,13 @@ class Request:
         self.val_words = OCR.classification(base64.b64decode(response.text.split('\"')[3])).lower()
 
     def get_validate_photo(self):
-        from PIL import ImageTk
-        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-        tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
-        return tk_img
+        try:
+            from PIL import ImageTk
+            response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
+            tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
+            return tk_img
+        except re.exceptions.ConnectionError:
+            return 'Please check your internet.'
 
     def req_login(self, v: int):
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
@@ -256,14 +215,19 @@ class Request:
         a = html.find('帳號或密碼錯誤')
         b = html.find('驗證碼輸入錯誤')
         c = html.find('驗證碼錯誤！')
-        if a == -1 and b == -1 and c == -1:
+        d = html.find('資料處理時發生錯誤')
+        if a == -1 and b == -1 and c == -1 and d == -1:
             i = html.find("name=\"session_key\" value=") + 26
             # 以i為指針找到"""
             j = html.find("\"", i)
             self.key = html[i:j]
             return 'S'
+        elif a != -1:
+            return 'AccountOrPasswordError'
+        elif d != -1:
+            return 'ServiceError'
         else:
-            return 'LOGIN ERROR: 帳號、密碼或驗證碼錯誤，請重新登錄。'
+            return 'ValidateError'
 
     def rewrite_text(self, i: int, file):
         if i == 4:
