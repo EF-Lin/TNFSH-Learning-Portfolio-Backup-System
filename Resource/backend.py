@@ -48,7 +48,6 @@ class Request:
     cadre_ex_list = []
     course_ach_list = []
     per_list = []
-    tem_list = []
     file_type = '.txt'
     font_title_1 = 'Microsoft_JhengHei 18 bold'
     font_title_2 = 'Microsoft_JhengHei 18'
@@ -171,7 +170,7 @@ class Request:
         except json.decoder.JSONDecodeError:
             return f"Backup {name[i]} failed, please try again."
         except FileNotFoundError:
-            return f"{name[i]}.txt is not exist."
+            return f"Backup {name[i]} data list failed"
         except re.exceptions.ConnectionError:
             return f'Backup {name[i]} failed, please check your internet.'
         except AttributeError:
@@ -236,25 +235,13 @@ class Request:
             path = self.main_path + self.path_list[i] * 2 + self.file_type
         self.generate_text(path, file)
 
-    def req_text(self, i, url: str, data: dict):
+    def post_data(self, url: str, data: dict) -> re.models.Response:
         response = self.session_requests.post(
             url=url,
             data=data,
             headers=self.headers
         )
-        if i == 0:
-            self.cadre_ex_list = (json.loads(response.text))['dataRows']
-            self.rewrite_text(i, self.cadre_ex_list)
-        elif i == 1:
-            self.course_ach_list = (json.loads(response.text))['dataRows']
-            self.rewrite_text(i, self.course_ach_list)
-        elif i == 2:
-            self.tem_list.extend(json.loads(response.text)["dataRows"])
-        elif i == 2.5:
-            self.per_list.extend(json.loads(response.text)["dataRows"])
-        elif i == 3:
-            self.file_list = json.loads(response.text)['list']
-            self.rewrite_text(i, self.file_list)
+        return response
 
     async def req_file_list(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentFiles.do'
@@ -262,7 +249,7 @@ class Request:
             'page': '1',
             'session_key': self.key
         }
-        self.req_text(3, url, data)
+        self.post_data(url, data)
 
     async def cadre_experience(self):
         url = 'https://epf-mlife.k12ea.gov.tw/serviceExperienceQuery.do'
@@ -270,7 +257,8 @@ class Request:
             'page': None,
             'session_key': self.key
         }
-        self.req_text(0, url, data)
+        self.cadre_ex_list = (json.loads(self.post_data(url, data).text))['dataRows']
+        self.rewrite_text(0, self.cadre_ex_list)
 
     async def course_achievement(self):
         url = 'https://epf-mlife.k12ea.gov.tw/courseEditQuery.do'
@@ -280,7 +268,8 @@ class Request:
             'syears': 'Y',
             'session_key': self.key
         }
-        self.req_text(1, url, data)
+        self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
+        self.rewrite_text(1, self.course_ach_list)
 
     async def performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
@@ -289,50 +278,80 @@ class Request:
             'syear': '全部',
             'session_key': self.key
         }
-        self.req_text(2, url, data)
+        return json.loads(self.post_data(url, data).text)["dataRows"]
 
     async def performers(self):
         data = {
             'page': '1',
             'session_key': self.key
         }
+        tem_list = []
         for i in range(1, 11, 1):
             url = f'https://epf-mlife.k12ea.gov.tw/performance{i}Query.do'
-            self.req_text(2, url, data)
-            for j in self.tem_list:
+            tem_list.extend(json.loads(self.post_data(url, data).text)["dataRows"])
+            for j in tem_list:
                 data2 = {
                     'id': j['id'],
                     'session_key': self.key
                 }
-                self.req_text(2.5, url, data2)
+                self.per_list.extend(json.loads(self.post_data(url, data2).text)["dataRows"])
         self.rewrite_text(2, self.per_list)
 
     async def download_course_ach(self):
         if self.course_ach_list == {}:
-            return FileNotFoundError
+            raise FileNotFoundError
         else:
             self.mkdir(self.main_path + self.tem_path_list[1])
-            for i in self.course_ach_list:
+            name_dict = {}
+            rename = False
+            rename_course_ach_list = self.course_ach_list
+            for i, j in zip(self.course_ach_list, range(len(rename_course_ach_list))):
                 uid = i["dp"]
                 url = f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={uid}'
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
-                with open(self.main_path + self.tem_path_list[1] + f'/{i["dn"]}', 'wb') as f:
+                name: str = i["dn"]
+                if name in name_dict.keys():
+                    name_dict[name] += 1
+                    n = name.split('.')
+                    n[0: -1] = [''.join(n[0: -1])]
+                    path = self.main_path + self.tem_path_list[1] + f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                    rename = True
+                    rename_course_ach_list[j]["dn"] = f'{n[0]} ({name_dict[name]}).{n[1]}'
+                else:
+                    name_dict[name] = 1
+                    path = self.main_path + self.tem_path_list[1] + f'/{name}'
+                with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
+            self.rewrite_text(1, rename_course_ach_list) if rename else 0
 
     async def download_per(self):
         if self.per_list == {}:
-            return FileNotFoundError
+            raise FileNotFoundError
         else:
             self.mkdir(self.main_path + self.tem_path_list[2])
-            for i in self.per_list:
+            name_dict = {}
+            rename = False
+            rename_per_list = self.per_list
+            for i, j in zip(self.per_list, range(len(rename_per_list))):
                 uid = i['df1']
                 url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
-                path = self.main_path + self.tem_path_list[2] + f"/{i['certiName']}"
+                name: str = i['certiName']
+                if name in name_dict.keys():
+                    name_dict[name] += 1
+                    n = name.split('.')
+                    n[0: -1] = [''.join(n[0: -1])]
+                    path = self.main_path + self.tem_path_list[2] + f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                    rename = True
+                    rename_per_list[j]['certiName'] = f'{n[0]} ({name_dict[name]}).{n[1]}'
+                else:
+                    name_dict[name] = 1
+                    path = self.main_path + self.tem_path_list[2] + f"/{name}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
+        self.rewrite_text(2, rename_per_list) if rename else 0
 
     def replace_folder(self, i):
         tem_path = self.main_path + self.tem_path_list[i]

@@ -50,7 +50,7 @@ class Main_interface(Request):
         self.login_window = tk.Tk()
         self.login_window.geometry('300x200')
         self.login_window.title('台南一中學習歷程備份系統')
-        self.login_window.iconbitmap('icon.ico')
+        self.login_window.iconbitmap(default='icon.ico')
         loginId_label = tk.Label(self.login_window, text='帳號：', font=self.font_text_2)
         loginId_label.pack()
         loginId_entry = tk.Entry(self.login_window, width=30)
@@ -83,7 +83,7 @@ class Main_interface(Request):
             validate_window = tk.Toplevel()
             validate_window.title('驗證碼')
             validate_window.geometry('300x200')
-            validate_window.iconbitmap('icon.ico')
+            validate_window.iconbitmap(default='icon.ico')
             validate_label = tk.Label(validate_window, image=img)
             validate_label.pack()
             validate_title = tk.Label(validate_window, text='請輸入驗證碼')
@@ -125,6 +125,10 @@ class Main_interface(Request):
                 except:
                     self.if_login_str.set('是否登入:是')
             else:
+                try:
+                    self.login_window.destroy()
+                except:
+                    pass
                 self.show_selection_window()
         elif response == 'ConnectionError':
             f = messagebox.askyesnocancel(title='錯誤',
@@ -206,7 +210,7 @@ class Main_interface(Request):
                     0 if j in message else messagebox.showerror(title='錯誤', message=j)
                     message.append(j)
             else:
-                messagebox.showinfo('訊息', '備份成功')
+                messagebox.showinfo(title='訊息', message='備份成功')
 
         def reset():
             yes = messagebox.askyesno(title='警告', message='是否要重新輸入帳號密碼?')
@@ -217,7 +221,8 @@ class Main_interface(Request):
         def delete_backup():
             yes = messagebox.askyesno(title='警告', message='此舉將刪除所有已備份文件、紀錄，並且不可回復!!!')
             if yes:
-                check = simpledialog.askstring(title='確認', prompt='請輸入\"delete\"刪除所有已備份文件、紀錄。')
+                check = simpledialog.askstring(parent=self.selection_window,
+                                               title='確認', prompt='請輸入\"delete\"刪除所有已備份文件、紀錄。')
                 self.delete_all_files() if check == 'delete' else 0
 
         def create_subject_window(i: int):
@@ -228,7 +233,7 @@ class Main_interface(Request):
         self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
-        self.selection_window.iconbitmap('icon.ico')
+        self.selection_window.iconbitmap(default='icon.ico')
         rows = [i for i in range(6 - self.v)]
         self.selection_window.rowconfigure(tuple(rows), weight=1)
         self.selection_window.columnconfigure((0, 1), weight=1)
@@ -280,7 +285,7 @@ class Main_interface(Request):
             anno_window = tk.Toplevel()
             anno_window.title('公告')
             anno_window.geometry('500x300')
-            anno_window.iconbitmap('icon.ico')
+            anno_window.iconbitmap(default='icon.ico')
             anno_title_label = tk.Label(anno_window, text='公告', font=self.font_title_1)
             anno_title_label.pack()
             j = 0
@@ -308,13 +313,13 @@ class Subject_window:
     data: list = None
 
     def __post_init__(self):
+        self.tree = None
         self.window = tk.Toplevel()
         self.window.title(self.inter.subject[self.i])
         self.window.geometry('600x350')
-        self.window.iconbitmap('icon.ico')
+        self.window.iconbitmap(default='icon.ico')
         developer_label = tk.Label(self.window, text='Developed by EFLin')
         developer_label.pack(side='top', anchor='e')
-        self.tree = None
         if self.i == 0:
             self.cols = self.inter.cadre_cols
         elif self.i == 1:
@@ -353,10 +358,10 @@ class Subject_window:
     def backup_and_show_message(self) -> bool:
         s = self.inter.backup(self.i)
         if s == 'S':
-            messagebox.showinfo('訊息', '備份成功')
+            messagebox.showinfo(parent=self.window, title='訊息', message='備份成功')
             return True
         else:
-            messagebox.showerror('錯誤', s)
+            messagebox.showerror(parent=self.window, title='錯誤', message=s)
             return False
 
     def open_folder(self):
@@ -417,7 +422,7 @@ class Covert(Request):
         self.show_covert_img_window = tk.Toplevel()
         self.show_covert_img_window.title('Image To pdf')
         self.show_covert_img_window.geometry('300x400')
-        self.show_covert_img_window.iconbitmap('icon.ico')
+        self.show_covert_img_window.iconbitmap(default='icon.ico')
         self.frame = tk.Frame(self.show_covert_img_window)
         self.frame.pack()
         self.img_name = tk.StringVar()
@@ -464,8 +469,8 @@ class Covert(Request):
             for i in range(len(self.img_size)):
                 size.append(self.img_size[i].get())
             covert_successful = self.covert_image_to_pdf(files=self.files,
-                                                               name=self.file_name.get(),
-                                                               size=size)
+                                                         name=self.file_name.get(),
+                                                         size=size)
             if covert_successful:
                 os.startfile(self.main_path)
             else:
