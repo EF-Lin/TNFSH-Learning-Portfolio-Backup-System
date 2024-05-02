@@ -9,6 +9,7 @@ import shutil
 from PIL import Image
 from datetime import datetime
 import time
+# from tkinter.ttk import Progressbar
 
 
 class Request:
@@ -180,7 +181,7 @@ class Request:
 
     def ocr(self):
         import ddddocr
-        OCR = ddddocr.DdddOcr(show_ad=False)
+        OCR = ddddocr.DdddOcr(show_ad=False, beta=True)
         # get validate photo
         response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
         self.val_words = OCR.classification(base64.b64decode(response.text.split('\"')[3])).lower()
