@@ -9,6 +9,7 @@ import shutil
 from PIL import Image
 from datetime import datetime
 import time
+# import tkinter as tk
 # from tkinter.ttk import Progressbar
 
 
@@ -162,11 +163,9 @@ class Request:
             elif i == 1:
                 asyncio.run(self.course_achievement())
                 asyncio.run(self.download_course_ach())
-                self.replace_folder(1)
             elif i == 2:
                 asyncio.run(self.performers())
                 asyncio.run(self.download_per())
-                self.replace_folder(2)
             return 'S'
         except json.decoder.JSONDecodeError:
             return f"Backup {name[i]} failed, please try again."
@@ -270,7 +269,7 @@ class Request:
             'session_key': self.key
         }
         self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
-        self.rewrite_text(1, self.course_ach_list)
+        # self.rewrite_text(1, self.course_ach_list)
 
     async def performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
@@ -296,7 +295,19 @@ class Request:
                     'session_key': self.key
                 }
                 self.per_list.extend(json.loads(self.post_data(url, data2).text)["dataRows"])
-        self.rewrite_text(2, self.per_list)
+        # self.rewrite_text(2, self.per_list)
+
+    def replace_folder(self, i):
+        tem_path = self.main_path + self.tem_path_list[i]
+        path = self.main_path + self.path_list[i]
+        f = os.path.exists(tem_path)
+        g = os.path.exists(path)
+        if f and g is True:
+            shutil.move(path + self.path_list[i] + self.file_type, tem_path + self.path_list[i] + self.file_type)
+            shutil.rmtree(path)
+            os.rename(tem_path, path)
+        else:
+            raise FileNotFoundError
 
     async def download_course_ach(self):
         if self.course_ach_list == {}:
@@ -312,18 +323,20 @@ class Request:
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i["dn"]
+                path = self.main_path + self.tem_path_list[1]
                 if name in name_dict.keys():
                     name_dict[name] += 1
                     n = name.split('.')
                     n[0: -1] = [''.join(n[0: -1])]
-                    path = self.main_path + self.tem_path_list[1] + f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                    path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
                     rename = True
                     rename_course_ach_list[j]["dn"] = f'{n[0]} ({name_dict[name]}).{n[1]}'
                 else:
                     name_dict[name] = 1
-                    path = self.main_path + self.tem_path_list[1] + f'/{name}'
+                    path += f'/{name}'
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
+            self.replace_folder(1)
             self.rewrite_text(1, rename_course_ach_list) if rename else 0
 
     async def download_per(self):
@@ -334,37 +347,29 @@ class Request:
             name_dict = {}
             rename = False
             rename_per_list = self.per_list
+            # progress_bar = tqdm(total=len(self.per_list))
             for i, j in zip(self.per_list, range(len(rename_per_list))):
+                # progress_bar.update(1)
                 uid = i['df1']
                 url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i['certiName']
+                path = self.main_path + self.tem_path_list[2]
                 if name in name_dict.keys():
                     name_dict[name] += 1
                     n = name.split('.')
                     n[0: -1] = [''.join(n[0: -1])]
-                    path = self.main_path + self.tem_path_list[2] + f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                    path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
                     rename = True
                     rename_per_list[j]['certiName'] = f'{n[0]} ({name_dict[name]}).{n[1]}'
                 else:
                     name_dict[name] = 1
-                    path = self.main_path + self.tem_path_list[2] + f"/{name}"
+                    path += f"/{name}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
-        self.rewrite_text(2, rename_per_list) if rename else 0
-
-    def replace_folder(self, i):
-        tem_path = self.main_path + self.tem_path_list[i]
-        path = self.main_path + self.path_list[i]
-        f = os.path.exists(tem_path)
-        g = os.path.exists(path)
-        if f is True and f == g:
-            shutil.move(path + self.path_list[i] + self.file_type, tem_path + self.path_list[i] + self.file_type)
-            shutil.rmtree(path)
-            os.rename(tem_path, path)
-        else:
-            raise FileNotFoundError
+            self.replace_folder(2)
+            self.rewrite_text(2, rename_per_list) if rename else 0
 
     def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
         try:
@@ -389,14 +394,11 @@ class Request:
 
     def req_announcement(self) -> [list, list, list]:
         url = 'https://epf-mlife.k12ea.gov.tw/student.do'
-        response = self.session_requests.post(
-            url=url,
-            headers=self.headers,
-            data={
-                'session_key': self.key,
-                'model': '2'
-            }
-        )
+        data = {
+            'session_key': self.key,
+            'model': '2'
+        }
+        response = self.post_data(url, data)
         soup = bs4.BeautifulSoup(response.text, 'html.parser')
         s = str(soup.find(class_='tab-pane fade in active').text).split('\n')
         announcement = []

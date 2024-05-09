@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import simpledialog
-from tkinter import filedialog
+from tkinter import messagebox, simpledialog, filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
@@ -356,6 +354,8 @@ class Subject_window:
             return []
 
     def backup_and_show_message(self) -> bool:
+        progress_window = tk.Toplevel()
+        progress_bar = ttk.Progressbar()
         s = self.inter.backup(self.i)
         if s == 'S':
             messagebox.showinfo(parent=self.window, title='訊息', message='備份成功')
