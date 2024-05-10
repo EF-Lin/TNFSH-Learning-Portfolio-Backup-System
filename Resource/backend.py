@@ -1,4 +1,3 @@
-import asyncio
 import io
 import bs4
 import requests as re
@@ -139,13 +138,10 @@ class Request:
         except Exception as ex:
             return False, f'Unknown Error.\n{str(ex)}'
 
-    def backup_all(self) -> list:
-        # s1 = self.backup_cadre_ex()
-        # s2 = self.backup_course_ach()
-        # s3 = self.backup_per()
-        s1 = self.backup(0)
-        s2 = self.backup(1)
-        s3 = self.backup(2)
+    async def backup_all(self) -> list:
+        s1 = await self.backup(0)
+        s2 = await self.backup(1)
+        s3 = await self.backup(2)
         return_list = []
         for i in [s1, s2, s3]:
             if i != "S":
@@ -155,17 +151,17 @@ class Request:
         else:
             return return_list
 
-    def backup(self, i: int) -> str:
+    async def backup(self, i: int) -> str:
         name = ['cadre experiment', 'course achievements', 'performers']
         try:
             if i == 0:
-                asyncio.run(self.cadre_experience())
+                self.cadre_experience()
             elif i == 1:
-                asyncio.run(self.course_achievement())
-                asyncio.run(self.download_course_ach())
+                self.course_achievement()
+                self.download_course_ach()
             elif i == 2:
-                asyncio.run(self.performers())
-                asyncio.run(self.download_per())
+                self.performers()
+                self.download_per()
             return 'S'
         except json.decoder.JSONDecodeError:
             return f"Backup {name[i]} failed, please try again."
@@ -243,7 +239,7 @@ class Request:
         )
         return response
 
-    async def req_file_list(self):
+    def req_file_list(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentFiles.do'
         data = {
             'page': '1',
@@ -251,7 +247,7 @@ class Request:
         }
         self.post_data(url, data)
 
-    async def cadre_experience(self):
+    def cadre_experience(self):
         url = 'https://epf-mlife.k12ea.gov.tw/serviceExperienceQuery.do'
         data = {
             'page': None,
@@ -260,7 +256,7 @@ class Request:
         self.cadre_ex_list = (json.loads(self.post_data(url, data).text))['dataRows']
         self.rewrite_text(0, self.cadre_ex_list)
 
-    async def course_achievement(self):
+    def course_achievement(self):
         url = 'https://epf-mlife.k12ea.gov.tw/courseEditQuery.do'
         data = {
             'type': 'upload',
@@ -270,7 +266,7 @@ class Request:
         }
         self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
 
-    async def performers_all(self):
+    def performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
         data = {
             'type': 'upload',
@@ -279,7 +275,7 @@ class Request:
         }
         return json.loads(self.post_data(url, data).text)["dataRows"]
 
-    async def performers(self):
+    def performers(self):
         data = {
             'page': '1',
             'session_key': self.key
@@ -319,7 +315,7 @@ class Request:
         self.processbar.pack()
         self.processbar_window.lift()
 
-    async def download_course_ach(self):
+    def download_course_ach(self):
         if self.course_ach_list == {}:
             raise FileNotFoundError
         else:
@@ -352,7 +348,7 @@ class Request:
             self.rewrite_text(1, rename_course_ach_list)
             self.processbar_window.destroy()
 
-    async def download_per(self):
+    def download_per(self):
         if self.per_list == {}:
             raise FileNotFoundError
         else:
