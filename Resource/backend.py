@@ -9,8 +9,8 @@ import shutil
 from PIL import Image
 from datetime import datetime
 import time
-# import tkinter as tk
-# from tkinter.ttk import Progressbar
+import tkinter as tk
+from tkinter.ttk import Progressbar
 
 
 class Request:
@@ -269,7 +269,6 @@ class Request:
             'session_key': self.key
         }
         self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
-        # self.rewrite_text(1, self.course_ach_list)
 
     async def performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
@@ -295,7 +294,6 @@ class Request:
                     'session_key': self.key
                 }
                 self.per_list.extend(json.loads(self.post_data(url, data2).text)["dataRows"])
-        # self.rewrite_text(2, self.per_list)
 
     def replace_folder(self, i):
         tem_path = self.main_path + self.tem_path_list[i]
@@ -303,11 +301,23 @@ class Request:
         f = os.path.exists(tem_path)
         g = os.path.exists(path)
         if f and g is True:
-            shutil.move(path + self.path_list[i] + self.file_type, tem_path + self.path_list[i] + self.file_type)
+            # shutil.move(path + self.path_list[i] + self.file_type, tem_path + self.path_list[i] + self.file_type)
             shutil.rmtree(path)
             os.rename(tem_path, path)
         else:
             raise FileNotFoundError
+
+    def generate_processbar(self, num):
+        self.processbar_window = tk.Toplevel()
+        self.processbar_window.title("下載進度")
+        self.processbar_window.geometry('300x100')
+        self.dl_file_name = tk.StringVar()
+        self.dl_file_name.set('')
+        name_label = tk.Label(self.processbar_window, textvariable=self.dl_file_name)
+        name_label.pack()
+        self.processbar = Progressbar(self.processbar_window, maximum=num, length=200)
+        self.processbar.pack()
+        self.processbar_window.lift()
 
     async def download_course_ach(self):
         if self.course_ach_list == {}:
@@ -315,29 +325,32 @@ class Request:
         else:
             self.mkdir(self.main_path + self.tem_path_list[1])
             name_dict = {}
-            rename = False
             rename_course_ach_list = self.course_ach_list
+            self.generate_processbar(len(rename_course_ach_list))
             for i, j in zip(self.course_ach_list, range(len(rename_course_ach_list))):
                 uid = i["dp"]
                 url = f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={uid}'
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i["dn"]
+                self.dl_file_name.set(name)
                 path = self.main_path + self.tem_path_list[1]
                 if name in name_dict.keys():
                     name_dict[name] += 1
                     n = name.split('.')
                     n[0: -1] = [''.join(n[0: -1])]
                     path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
-                    rename = True
                     rename_course_ach_list[j]["dn"] = f'{n[0]} ({name_dict[name]}).{n[1]}'
                 else:
                     name_dict[name] = 1
                     path += f'/{name}'
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
+                self.processbar['value'] = j + 1
+                self.processbar.update()
             self.replace_folder(1)
-            self.rewrite_text(1, rename_course_ach_list) if rename else 0
+            self.rewrite_text(1, rename_course_ach_list)
+            self.processbar_window.destroy()
 
     async def download_per(self):
         if self.per_list == {}:
@@ -345,16 +358,15 @@ class Request:
         else:
             self.mkdir(self.main_path + self.tem_path_list[2])
             name_dict = {}
-            rename = False
             rename_per_list = self.per_list
-            # progress_bar = tqdm(total=len(self.per_list))
+            self.generate_processbar(len(rename_per_list))
             for i, j in zip(self.per_list, range(len(rename_per_list))):
-                # progress_bar.update(1)
                 uid = i['df1']
                 url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i['certiName']
+                self.dl_file_name.set(name)
                 path = self.main_path + self.tem_path_list[2]
                 if name in name_dict.keys():
                     name_dict[name] += 1
@@ -368,8 +380,11 @@ class Request:
                     path += f"/{name}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
+                self.processbar['value'] = j + 1
+                self.processbar.update()
             self.replace_folder(2)
-            self.rewrite_text(2, rename_per_list) if rename else 0
+            self.rewrite_text(2, rename_per_list)
+            self.processbar_window.destroy()
 
     def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
         try:

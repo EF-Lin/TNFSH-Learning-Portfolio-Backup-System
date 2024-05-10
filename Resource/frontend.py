@@ -354,8 +354,6 @@ class Subject_window:
             return []
 
     def backup_and_show_message(self) -> bool:
-        progress_window = tk.Toplevel()
-        progress_bar = ttk.Progressbar()
         s = self.inter.backup(self.i)
         if s == 'S':
             messagebox.showinfo(parent=self.window, title='訊息', message='備份成功')
