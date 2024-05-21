@@ -1,5 +1,5 @@
 from Resource.backend import Request
-from icon import icon
+from Resource.icon import icon
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
