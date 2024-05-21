@@ -1,3 +1,5 @@
+from Resource.backend import Request
+from icon import icon
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
@@ -5,7 +7,15 @@ import tkinter.ttk as ttk
 import pyperclip
 import os
 import asyncio
-from Resource.backend import Request
+import base64
+
+
+def add_icon(window: tk.Tk):
+    with open('tmp.ico', 'wb+') as d:
+        d.write(base64.b64decode(icon))
+    window.iconbitmap(default='tmp.ico')
+    os.remove('tmp.ico')
+    return window
 
 
 class Main_interface(Request):
@@ -49,7 +59,7 @@ class Main_interface(Request):
         self.login_window = tk.Tk()
         self.login_window.geometry('300x200')
         self.login_window.title('台南一中學習歷程備份系統')
-        self.login_window.iconbitmap(default='icon.ico')
+        self.login_window = add_icon(self.login_window)
         loginId_label = tk.Label(self.login_window, text='帳號：', font=self.font_text_2)
         loginId_label.pack()
         loginId_entry = tk.Entry(self.login_window, width=30)
@@ -82,7 +92,6 @@ class Main_interface(Request):
             validate_window = tk.Toplevel()
             validate_window.title('驗證碼')
             validate_window.geometry('300x200')
-            validate_window.iconbitmap(default='icon.ico')
             validate_label = tk.Label(validate_window, image=img)
             validate_label.pack()
             validate_title = tk.Label(validate_window, text='請輸入驗證碼')
@@ -110,6 +119,16 @@ class Main_interface(Request):
             self.try_login()
 
     def try_login(self):
+        def try_delete_windows():
+            try:
+                self.login_window.destroy()
+            except:
+                pass
+            try:
+                self.selection_window.destroy()
+            except:
+                pass
+
         with open(self.user_info_path, 'r') as f:
             user_info = eval(f.read())
         self.data.update(user_info)
@@ -124,10 +143,7 @@ class Main_interface(Request):
                 except:
                     self.if_login_str.set('是否登入:是')
             else:
-                try:
-                    self.login_window.destroy()
-                except:
-                    pass
+                try_delete_windows()
                 self.show_selection_window()
         elif response == 'ConnectionError':
             f = messagebox.askyesnocancel(title='錯誤',
@@ -138,10 +154,7 @@ class Main_interface(Request):
             elif self.v == 2 and f:
                 self.try_login()
             elif f is False:
-                try:
-                    self.login_window.destroy()
-                except:
-                    pass
+                try_delete_windows()
                 self.if_login = False
                 self.show_selection_window()
             else:
@@ -150,13 +163,10 @@ class Main_interface(Request):
             f = messagebox.askyesnocancel(title='錯誤',
                                           message='帳號或密碼錯誤，是否重新輸入?',
                                           detail='點擊「是」重新輸入，點擊「否」進入選單介面，在離線模式下運行系統。')
+            try_delete_windows()
             if f:
                 self.show_login()
             elif f is False:
-                try:
-                    self.login_window.destroy()
-                except:
-                    pass
                 self.if_login = False
                 self.show_selection_window()
             else:
@@ -168,6 +178,7 @@ class Main_interface(Request):
             if f:
                 self.show_validate_window()
             elif f is False:
+                try_delete_windows()
                 self.if_login = False
                 self.show_selection_window()
             else:
@@ -179,10 +190,7 @@ class Main_interface(Request):
             if f:
                 self.try_login()
             elif f is False:
-                try:
-                    self.login_window.destroy()
-                except:
-                    pass
+                try_delete_windows()
                 self.if_login = False
                 self.show_selection_window()
             else:
@@ -196,6 +204,7 @@ class Main_interface(Request):
             elif f and self.v == 2:
                 self.try_login()
             elif f is False:
+                try_delete_windows()
                 self.show_login()
             else:
                 pass
@@ -232,7 +241,7 @@ class Main_interface(Request):
         self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
-        self.selection_window.iconbitmap(default='icon.ico')
+        self.selection_window = add_icon(self.selection_window)
         rows = [i for i in range(6 - self.v)]
         self.selection_window.rowconfigure(tuple(rows), weight=1)
         self.selection_window.columnconfigure((0, 1), weight=1)
@@ -284,7 +293,6 @@ class Main_interface(Request):
             anno_window = tk.Toplevel()
             anno_window.title('公告')
             anno_window.geometry('500x300')
-            anno_window.iconbitmap(default='icon.ico')
             anno_title_label = tk.Label(anno_window, text='公告', font=self.font_title_1)
             anno_title_label.pack()
             j = 0
@@ -316,7 +324,6 @@ class Subject_window:
         self.window = tk.Toplevel()
         self.window.title(self.inter.subject[self.i])
         self.window.geometry('600x350')
-        self.window.iconbitmap(default='icon.ico')
         developer_label = tk.Label(self.window, text='Developed by EFLin')
         developer_label.pack(side='top', anchor='e')
         if self.i == 0:
@@ -421,7 +428,6 @@ class Covert(Request):
         self.show_covert_img_window = tk.Toplevel()
         self.show_covert_img_window.title('Image To pdf')
         self.show_covert_img_window.geometry('300x400')
-        self.show_covert_img_window.iconbitmap(default='icon.ico')
         self.frame = tk.Frame(self.show_covert_img_window)
         self.frame.pack()
         self.img_name = tk.StringVar()
@@ -478,5 +484,5 @@ class Covert(Request):
 
 if __name__ == '__main__':
     #version = int(input())
-    version = 1
+    version = 2
     interface = Main_interface(version)

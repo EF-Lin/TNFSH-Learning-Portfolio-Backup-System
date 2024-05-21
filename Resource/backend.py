@@ -83,14 +83,16 @@ class Request:
     def __str__(self) -> str:
         return 'This is a spider'
 
-    def mkdir(self, path):
+    @staticmethod
+    def mkdir(path):
         f = os.path.exists(path)
         if not f:
             os.makedirs(path)
         else:
             pass
 
-    def generate_text(self, path, file):
+    @staticmethod
+    def generate_text(path, file):
         with open(path, 'w', encoding="utf-8") as t:
             t.write(str(file))
 
@@ -219,10 +221,10 @@ class Request:
             return 'S'
         elif a != -1:
             return 'AccountOrPasswordError'
-        elif d != -1:
-            return 'ServiceError'
-        else:
+        elif b != -1 or c != -1:
             return 'ValidateError'
+        else:
+            return 'ServiceError'
 
     def rewrite_text(self, i: int, file):
         if i == 4:
