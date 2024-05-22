@@ -1,5 +1,5 @@
-from Resource.backend import Request
-from Resource.icon import icon
+from backend import Request
+from icon import icon
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
@@ -107,7 +107,7 @@ class Main_interface(Request):
             'loginId': loginId,
             'password': password,
         }
-        self.generate_text(self.user_info_path, user_info)
+        self.replace_text(self.user_info_path, user_info)
 
     def check_user_data(self) -> bool or None:
         f = os.path.exists(self.user_info_path)

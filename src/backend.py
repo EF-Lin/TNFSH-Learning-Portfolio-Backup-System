@@ -15,8 +15,6 @@ from tkinter.ttk import Progressbar
 class Request:
     """爬資料"""
     # info
-    # main_path = '.\\files'
-    main_path = os.path.normpath('files')
     path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
@@ -61,6 +59,7 @@ class Request:
         self.key = None
         self.val_words = None
         # init path
+        self.main_path = os.path.normpath('files')
         for i in range(1, len(self.tem_path_list)):
             self.tem_path_list[i] = os.path.normpath(self.tem_path_list[i])
         for i in range(len(self.path_list)):
@@ -78,7 +77,7 @@ class Request:
         }
         # create session
         self.session_requests = re.session()
-        #self.login()
+        # self.login()
 
     def __str__(self) -> str:
         return 'This is a spider'
@@ -86,15 +85,24 @@ class Request:
     @staticmethod
     def mkdir(path):
         f = os.path.exists(path)
-        if not f:
-            os.makedirs(path)
-        else:
-            pass
+        os.makedirs(path) if not f else 0
 
     @staticmethod
-    def generate_text(path, file):
-        with open(path, 'w', encoding="utf-8") as t:
-            t.write(str(file))
+    def replace_text(path, file):
+        f = os.path.exists(path)
+        if not f:
+            with open(path, 'w', encoding="utf-8") as t:
+                t.write(str(file))
+        else:
+            raise FileNotFoundError
+
+    @staticmethod
+    def generate_blank_text(path):
+        f = os.path.exists(path)
+        if not f:
+            open(path, 'w').close()
+        else:
+            raise FileNotFoundError
 
     def init_folders(self):
         self.mkdir(self.main_path)
@@ -102,15 +110,8 @@ class Request:
             self.mkdir(self.main_path + i)
 
     def init_texts(self):
-        def generate_blank_text(path):
-            f = os.path.exists(path)
-            if not f:
-                open(path, 'w').close()
-            else:
-                pass
-
         for i in self.path_list[0:3]:
-            generate_blank_text(self.main_path + i * 2 + self.file_type)
+            self.generate_blank_text(f'{self.main_path}{i*2}{self.file_type}')
 
     def delete_all_files(self):
         for i in self.path_list[0:3]:
@@ -231,7 +232,7 @@ class Request:
             path = self.main_path + 'file_list' + self.file_type
         else:
             path = self.main_path + self.path_list[i] * 2 + self.file_type
-        self.generate_text(path, file)
+        self.replace_text(path, file)
 
     def post_data(self, url: str, data: dict) -> re.models.Response:
         response = self.session_requests.post(
@@ -299,7 +300,6 @@ class Request:
         f = os.path.exists(tem_path)
         g = os.path.exists(path)
         if f and g is True:
-            # shutil.move(path + self.path_list[i] + self.file_type, tem_path + self.path_list[i] + self.file_type)
             shutil.rmtree(path)
             os.rename(tem_path, path)
         else:
