@@ -209,15 +209,38 @@ class Main_interface(Request):
             else:
                 pass
 
+    def load_data(self, i: int, repeater: int = 2) -> list or str:
+        try:
+            path = self.main_path + self.path_list[i] * repeater + self.file_type
+            with open(path, 'r', encoding="utf-8") as f:
+                if repeater == 1:
+                    return f'最後備份時間: {str(f.read())}'
+                else:
+                    return eval(f.read())
+        except SyntaxError:
+            # SyntaxError: Please backup first.
+            if repeater == 1:
+                return ['尚未備份']
+            else:
+                messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
+                return []
+        except Exception as ex:
+            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
+            if repeater == 1:
+                return ['尚未備份']
+            else:
+                return []
+
     def show_selection_window(self):
         def backup_all_and_show_message():
-            s = asyncio.run(self.backup_all())
-            if s:
+            error_message = asyncio.run(self.backup_all())
+            if error_message:
                 message = []
-                for j in s:
+                for j in error_message:
                     0 if j in message else messagebox.showerror(title='錯誤', message=j)
                     message.append(j)
             else:
+                self.last_bt_var.set(self.load_data(4, repeater=1))
                 messagebox.showinfo(title='訊息', message='備份成功')
 
         def reset():
@@ -242,8 +265,7 @@ class Main_interface(Request):
         self.selection_window.title('台南一中學習歷程備份系統')
         self.selection_window.geometry('360x400')
         self.selection_window = add_icon(self.selection_window)
-        rows = [i for i in range(6 - self.v)]
-        self.selection_window.rowconfigure(tuple(rows), weight=1)
+        self.selection_window.rowconfigure(tuple(i for i in range(6 - self.v)), weight=1)
         self.selection_window.columnconfigure((0, 1), weight=1)
         w = 8
         h = 3
@@ -277,11 +299,15 @@ class Main_interface(Request):
                                      command=self.show_validate_window, width=16, height=2)
             login_button.grid(row=4, column=0, columnspan=2, sticky='n')
         frame = tk.Frame(self.selection_window)
+        self.last_bt_var = tk.StringVar()
+        self.last_bt_var.set(self.load_data(4, repeater=1))
+        last_bt_lbl = tk.Label(frame, textvariable=self.last_bt_var)
+        last_bt_lbl.pack()
         if_login_label = tk.Label(frame, textvariable=self.if_login_str)
-        if_login_label.pack()
+        if_login_label.pack(anchor='e')
         developer_label = tk.Label(frame, text='Developed by EFLin')
         developer_label.pack(side='bottom', anchor='e')
-        frame.grid(column=1)
+        frame.grid(column=0, columnspan=2)
         self.selection_window.lift()
         self.selection_window.mainloop()
 
@@ -347,22 +373,9 @@ class Subject_window:
         self.create_tree_data()
         self.window.mainloop()
 
-    def load_data(self, i: int) -> list:
-        try:
-            path = self.inter.main_path + self.inter.path_list[i] * 2 + self.inter.file_type
-            with open(path, 'r', encoding="utf-8") as f:
-                d = eval(f.read())
-            return d
-        except SyntaxError:
-            # SyntaxError: Please backup first.
-            messagebox.showerror(title='錯誤', message='無資料，請先備份，若已備份就是你沒有資料，爛透了。')
-            return []
-        except Exception as ex:
-            messagebox.showerror(title='錯誤', message=f'{str(ex)}\nUnknown Error.')
-            return []
-
     def backup_and_show_message(self) -> bool:
         s = asyncio.run(self.inter.backup(self.i))
+        self.inter.last_bt_var.set(self.inter.load_data(4, repeater=1))
         if s == 'S':
             messagebox.showinfo(parent=self.window, title='訊息', message='備份成功')
             return True
@@ -385,7 +398,7 @@ class Subject_window:
                 copy_str += f'{j}: {str(i)}\n'
             pyperclip.copy(copy_str)
 
-        self.data = self.load_data(self.i)
+        self.data = self.inter.load_data(self.i)
         self.window.lift()
         self.tree = ttk.Treeview(
             self.window,

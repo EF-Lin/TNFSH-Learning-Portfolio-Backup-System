@@ -7,7 +7,6 @@ import os
 import shutil
 from PIL import Image
 from datetime import datetime
-import time
 import tkinter as tk
 from tkinter.ttk import Progressbar
 
@@ -15,7 +14,7 @@ from tkinter.ttk import Progressbar
 class Request:
     """爬資料"""
     # info
-    path_list = ['/cadre', '/course_achievements', '/performers', '/user_info']
+    path_list = ['/cadre', '/course_achievements', '/performers', '/user_info', '/time']
     tem_path_list = ['', '/course_achievements_2', '/performers_2']
     subject = ['幹部經歷', '課程學習成果', '多元表現']
     cadre_cols = {
@@ -89,20 +88,14 @@ class Request:
 
     @staticmethod
     def replace_text(path, file):
-        f = os.path.exists(path)
-        if not f:
-            with open(path, 'w', encoding="utf-8") as t:
-                t.write(str(file))
-        else:
-            raise FileNotFoundError
+        with open(path, 'w', encoding="utf-8") as t:
+            t.write(str(file))
 
     @staticmethod
     def generate_blank_text(path):
         f = os.path.exists(path)
         if not f:
             open(path, 'w').close()
-        else:
-            raise FileNotFoundError
 
     def init_folders(self):
         self.mkdir(self.main_path)
@@ -112,6 +105,7 @@ class Request:
     def init_texts(self):
         for i in self.path_list[0:3]:
             self.generate_blank_text(f'{self.main_path}{i*2}{self.file_type}')
+        self.generate_blank_text(f'{self.main_path}{self.path_list[4]}{self.file_type}')
 
     def delete_all_files(self):
         for i in self.path_list[0:3]:
@@ -145,14 +139,11 @@ class Request:
         s1 = await self.backup(0)
         s2 = await self.backup(1)
         s3 = await self.backup(2)
-        return_list = []
+        message_list = []
         for i in [s1, s2, s3]:
             if i != "S":
-                return_list.append(i)
-        if not return_list:
-            return []
-        else:
-            return return_list
+                message_list.append(i)
+        return message_list
 
     async def backup(self, i: int) -> str:
         name = ['cadre experiment', 'course achievements', 'performers']
@@ -165,6 +156,7 @@ class Request:
             elif i == 2:
                 self.performers()
                 self.download_per()
+            self.update_time()
             return 'S'
         except json.decoder.JSONDecodeError:
             return f"Backup {name[i]} failed, please try again."
@@ -417,7 +409,7 @@ class Request:
         announcement = []
         date = []
         deadline = []
-        now = datetime.fromtimestamp(time.time())
+        now = datetime.now()
         for i in range(len(s)):
             if s[i] != '':
                 n = "".join(s[i].split())
@@ -436,8 +428,13 @@ class Request:
                 pass
         return [announcement, date, deadline]
 
+    def update_time(self):
+        self.replace_text(f'{self.main_path}{self.path_list[4]}{self.file_type}',
+                          f'{datetime.now().year - 1911}/{datetime.now().strftime('%m/%d %H:%M')}')
+
 
 if __name__ == '__main__':
+    """
     loginId = str(input('請輸入帳號'))
     password = str(input('請輸入密碼'))
     Data = {
@@ -448,3 +445,5 @@ if __name__ == '__main__':
         'validateCode': '',
         'formToken': ''
     }
+    """
+    Request().update_time()
