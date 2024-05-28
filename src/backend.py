@@ -434,7 +434,6 @@ class Request:
 
 
 if __name__ == '__main__':
-    """
     loginId = str(input('請輸入帳號'))
     password = str(input('請輸入密碼'))
     Data = {
@@ -445,5 +444,3 @@ if __name__ == '__main__':
         'validateCode': '',
         'formToken': ''
     }
-    """
-    Request().update_time()

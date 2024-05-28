@@ -18,13 +18,14 @@ def add_icon(window: tk.Tk):
     return window
 
 
+@dataclass
 class Main_interface(Request):
-    """主介面"""
+    """Usage: check_user_data()"""
     city = '12'
     schNo = '210305.國立台南第一高級中學'
+    v: int
 
-    def __init__(self, v: int):
-        self.v = v
+    def __post_init__(self):
         # init
         super().__init__()
         self.data = {
@@ -41,7 +42,7 @@ class Main_interface(Request):
         # user info
         self.user_info_path = self.main_path + self.path_list[3] + self.file_type
         # run
-        self.check_user_data()
+        # self.check_user_data()
 
     def __str__(self) -> str:
         return 'This is the main interface'
@@ -256,9 +257,6 @@ class Main_interface(Request):
                                                title='確認', prompt='請輸入\"delete\"刪除所有已備份文件、紀錄。')
                 self.delete_all_files() if check == 'delete' else 0
 
-        def create_subject_window(i: int):
-            Subject_window(inter=self, i=i)
-
         self.selection_window = tk.Tk()
         self.if_login_str = tk.StringVar()
         self.if_login_str.set('是否登入:是') if self.if_login else self.if_login_str.set('是否登入:否')
@@ -269,24 +267,23 @@ class Main_interface(Request):
         self.selection_window.columnconfigure((0, 1), weight=1)
         w = 8
         h = 3
-        covert = Covert()
         announcement_button = tk.Button(self.selection_window, text='公告', font=self.font_button,
                                         command=self.show_anno, width=w, height=h)
         announcement_button.grid(row=0, column=0, sticky='se')
         cadre_button = tk.Button(self.selection_window, text='幹部經歷', font=self.font_button,
-                                 command=lambda: create_subject_window(0), width=w, height=h)
+                                 command=lambda: self.show_subject_window(0), width=w, height=h)
         cadre_button.grid(row=0, column=1, sticky='sw')
         course_ach_button = tk.Button(self.selection_window, text='學習成果', font=self.font_button,
-                                      command=lambda: create_subject_window(1), width=w, height=h)
+                                      command=lambda: self.show_subject_window(1), width=w, height=h)
         course_ach_button.grid(row=1, column=0, sticky='e')
         per_button = tk.Button(self.selection_window, text='多元表現', font=self.font_button,
-                               command=lambda: create_subject_window(2), width=w, height=h)
+                               command=lambda: self.show_subject_window(2), width=w, height=h)
         per_button.grid(row=1, column=1, sticky='w')
         backup_button = tk.Button(self.selection_window, text='備份', font=self.font_button,
                                   command=backup_all_and_show_message, width=w, height=h)
         backup_button.grid(row=2, column=0, sticky='e')
         covert_img_button = tk.Button(self.selection_window, text='轉檔工具', font=self.font_button,
-                                      command=covert.show_covert_img, width=w, height=h)
+                                      command=Covert.show_covert_img, width=w, height=h)
         covert_img_button.grid(row=2, column=1, sticky='w')
         relogin_button = tk.Button(self.selection_window, text='重新登入', font=self.font_button,
                                    command=reset, width=w, height=h)
@@ -310,6 +307,84 @@ class Main_interface(Request):
         frame.grid(column=0, columnspan=2)
         self.selection_window.lift()
         self.selection_window.mainloop()
+
+    def show_subject_window(self, sub_num: int):
+        def create_tree_data():
+            def copy_from_treeview():
+                # refer from https://blog.csdn.net/vae565056149/article/details/128218467
+                # 選取列
+                selection = tree.selection()
+                values = tree.item(selection[0])["values"]
+                copy_str = ''
+                items = list(self.cols.values())
+                for i, j in zip(values, items):
+                    copy_str += f'{j}: {str(i)}\n'
+                pyperclip.copy(copy_str)
+
+            global tree
+            self.data = self.load_data(sub_num)
+            window.lift()
+            tree = ttk.Treeview(
+                window,
+                show='headings',
+                columns=[i for i in range(len(self.cols))],
+                yscrollcommand=scrollbar.set
+            )
+            for i in range(len(self.cols)):
+                tree.column(i, width=80)
+            j = 1
+            for i in self.cols.values():
+                tree.heading(f"#{j}", text=i)
+                j += 1
+            for i in self.data:
+                data_list = []
+                for j in self.cols.keys():
+                    data_list.append(i[j])
+                tree.insert('', index='end', text='', values=data_list)
+            tree.bind('<3>', lambda x: copy_from_treeview())
+            tree.pack()
+
+        def backup_and_show_message() -> bool:
+            s = asyncio.run(self.backup(sub_num))
+            self.last_bt_var.set(self.load_data(4, repeater=1))
+            if s == 'S':
+                messagebox.showinfo(parent=window, title='訊息', message='備份成功')
+                return True
+            else:
+                messagebox.showerror(parent=window, title='錯誤', message=s)
+                return False
+
+        def rebuild_tree():
+            successful = backup_and_show_message()
+            if successful:
+                tree.destroy()
+                create_tree_data()
+
+        window = tk.Toplevel()
+        window.title(self.subject[sub_num])
+        window.geometry('600x350')
+        developer_label = tk.Label(window, text='Developed by EFLin')
+        developer_label.pack(side='top', anchor='e')
+        if sub_num == 0:
+            self.cols = self.cadre_cols
+        elif sub_num == 1:
+            self.cols = self.course_cols
+        elif sub_num == 2:
+            self.cols = self.per_cols
+        else:
+            messagebox.showerror(title='警告', message='Unknown error')
+            exit()
+        path = self.main_path + self.path_list[sub_num]
+        backup_button = tk.Button(window, text=f'備份{self.subject[sub_num]}', command=rebuild_tree)
+        backup_button.pack()
+        open_file_button = tk.Button(window, text='開啟資料夾', command=lambda: os.startfile(path))
+        open_file_button.pack()
+        note1_label = tk.Label(window, text='選中後點擊右鍵可複製。')
+        note1_label.pack()
+        scrollbar = tk.Scrollbar(window)
+        scrollbar.pack(side='right', fill='y')
+        create_tree_data()
+        window.mainloop()
 
     def show_anno(self):
         successful, data = self.announcement()
@@ -339,97 +414,7 @@ class Main_interface(Request):
 
 
 @dataclass
-class Subject_window:
-    """子視窗"""
-    inter: Main_interface
-    i: int
-    data: list = None
-
-    def __post_init__(self):
-        self.tree = None
-        self.window = tk.Toplevel()
-        self.window.title(self.inter.subject[self.i])
-        self.window.geometry('600x350')
-        developer_label = tk.Label(self.window, text='Developed by EFLin')
-        developer_label.pack(side='top', anchor='e')
-        if self.i == 0:
-            self.cols = self.inter.cadre_cols
-        elif self.i == 1:
-            self.cols = self.inter.course_cols
-        elif self.i == 2:
-            self.cols = self.inter.per_cols
-        else:
-            messagebox.showerror(title='警告', message='Unknown error')
-            exit()
-        self.path = self.inter.main_path + self.inter.path_list[self.i]
-        backup_button = tk.Button(self.window, text=f'備份{self.inter.subject[self.i]}', command=self.rebuild_tree)
-        backup_button.pack()
-        open_file_button = tk.Button(self.window, text='開啟資料夾', command=self.open_folder)
-        open_file_button.pack()
-        note1_label = tk.Label(self.window, text='選中後點擊右鍵可複製。')
-        note1_label.pack()
-        self.scrollbar = tk.Scrollbar(self.window)
-        self.scrollbar.pack(side='right', fill='y')
-        self.create_tree_data()
-        self.window.mainloop()
-
-    def backup_and_show_message(self) -> bool:
-        s = asyncio.run(self.inter.backup(self.i))
-        self.inter.last_bt_var.set(self.inter.load_data(4, repeater=1))
-        if s == 'S':
-            messagebox.showinfo(parent=self.window, title='訊息', message='備份成功')
-            return True
-        else:
-            messagebox.showerror(parent=self.window, title='錯誤', message=s)
-            return False
-
-    def open_folder(self):
-        os.startfile(self.path)
-
-    def create_tree_data(self):
-        def copy_from_treeview():
-            # refer from https://blog.csdn.net/vae565056149/article/details/128218467
-            # 選取列
-            selection = self.tree.selection()
-            values = self.tree.item(selection[0])["values"]
-            copy_str = ''
-            items = list(self.cols.values())
-            for i, j in zip(values, items):
-                copy_str += f'{j}: {str(i)}\n'
-            pyperclip.copy(copy_str)
-
-        self.data = self.inter.load_data(self.i)
-        self.window.lift()
-        self.tree = ttk.Treeview(
-            self.window,
-            show='headings',
-            columns=[i for i in range(len(self.cols))],
-            yscrollcommand=self.scrollbar.set
-        )
-        for i in range(len(self.cols)):
-            self.tree.column(i, width=80)
-        j = 1
-        for i in self.cols.values():
-            self.tree.heading(f"#{j}", text=i)
-            j += 1
-        for i in self.data:
-            data_list = []
-            for j in self.cols.keys():
-                data_list.append(i[j])
-            self.tree.insert('', index='end', text='', values=data_list)
-        self.tree.bind('<3>', lambda x: copy_from_treeview())
-        self.tree.pack()
-
-    def rebuild_tree(self):
-        successful = self.backup_and_show_message()
-        if successful:
-            self.tree.destroy()
-            self.create_tree_data()
-
-
-@dataclass
 class Covert(Request):
-    """轉檔視窗"""
     def __post_init__(self):
         self.files: tuple = ()
         self.img_size: list = []
@@ -496,6 +481,6 @@ class Covert(Request):
 
 
 if __name__ == '__main__':
-    #version = int(input())
     version = 2
     interface = Main_interface(version)
+    interface.check_user_data()
