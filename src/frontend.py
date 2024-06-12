@@ -6,7 +6,6 @@ from tkinter import messagebox, simpledialog, filedialog
 import tkinter.ttk as ttk
 import pyperclip
 import os
-import asyncio
 import base64
 
 
@@ -234,12 +233,10 @@ class Main_interface(Request):
 
     def show_selection_window(self):
         def backup_all_and_show_message():
-            error_message = asyncio.run(self.backup_all())
+            error_message = self.backup_all()
             if error_message:
-                message = []
                 for j in error_message:
-                    0 if j in message else messagebox.showerror(title='錯誤', message=j)
-                    message.append(j)
+                    messagebox.showerror(title='錯誤', message=j)
             else:
                 self.last_bt_var.set(self.load_data(4, repeater=1))
                 messagebox.showinfo(title='訊息', message='備份成功')
@@ -345,7 +342,7 @@ class Main_interface(Request):
             tree.pack()
 
         def backup_and_show_message() -> bool:
-            s = asyncio.run(self.backup(sub_num))
+            s = self.backup(sub_num)
             self.last_bt_var.set(self.load_data(4, repeater=1))
             if s == 'S':
                 messagebox.showinfo(parent=window, title='訊息', message='備份成功')

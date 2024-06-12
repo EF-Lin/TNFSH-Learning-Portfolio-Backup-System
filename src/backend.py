@@ -1,3 +1,4 @@
+import asyncio
 import io
 import bs4
 import requests as re
@@ -54,9 +55,6 @@ class Request:
     font_button = 'Microsoft_JhengHei 15'
 
     def __init__(self):
-        # vars
-        self.key = None
-        self.val_words = None
         # init path
         self.main_path = os.path.normpath('files')
         for i in range(1, len(self.tem_path_list)):
@@ -79,7 +77,7 @@ class Request:
         # self.login()
 
     def __str__(self) -> str:
-        return 'This is a spider'
+        return 'This is a spider.'
 
     @staticmethod
     def mkdir(path):
@@ -119,7 +117,7 @@ class Request:
 
     def login(self, v: int) -> str:
         try:
-            return self.req_login(v)
+            return self._req_login(v)
         except re.exceptions.ConnectionError:
             return 'ConnectionError'
         except Exception as ex:
@@ -135,17 +133,17 @@ class Request:
         except Exception as ex:
             return False, f'Unknown Error.\n{str(ex)}'
 
-    async def backup_all(self) -> list:
-        s1 = await self.backup(0)
-        s2 = await self.backup(1)
-        s3 = await self.backup(2)
+    def backup_all(self) -> list:
         message_list = []
-        for i in [s1, s2, s3]:
-            if i != "S":
-                message_list.append(i)
+        for i in range(3):
+            s = self.backup(i)
+            if s == 'S':
+                pass
+            else:
+                message_list.append(s)
         return message_list
 
-    async def backup(self, i: int) -> str:
+    def backup(self, i: int) -> str:
         name = ['cadre experiment', 'course achievements', 'performers']
         try:
             if i == 0:
@@ -169,13 +167,6 @@ class Request:
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
-    def ocr(self):
-        import ddddocr
-        OCR = ddddocr.DdddOcr(show_ad=False, beta=True)
-        # get validate photo
-        response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-        self.val_words = OCR.classification(base64.b64decode(response.text.split('\"')[3])).lower()
-
     def get_validate_photo(self):
         try:
             from PIL import ImageTk
@@ -185,7 +176,14 @@ class Request:
         except re.exceptions.ConnectionError:
             return 'Please check your internet.'
 
-    def req_login(self, v: int):
+    def _req_login(self, v: int):
+        def ocr() -> str:
+            import ddddocr
+            OCR = ddddocr.DdddOcr(show_ad=False, beta=True)
+            # get validate photo
+            return OCR.classification(base64.b64decode(self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do',
+                                                                                  {'d': 1}).text.split('\"')[3])).lower()
+
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # request
         response = self.session_requests.get(url)
@@ -194,8 +192,7 @@ class Request:
         token = soup.find('input', {'name': 'formToken'})['value']
         self.data['formToken'] = token
         if v == 2:
-            self.ocr()
-            self.data['validateCode'] = self.val_words
+            self.data['validateCode'] = ocr()
         response = self.session_requests.post(
             url=url,
             data=self.data,
@@ -234,7 +231,7 @@ class Request:
         )
         return response
 
-    def req_file_list(self):
+    def _req_file_list(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentFiles.do'
         data = {
             'page': '1',
@@ -261,7 +258,7 @@ class Request:
         }
         self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
 
-    def performers_all(self):
+    def _performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
         data = {
             'type': 'upload',
@@ -297,29 +294,55 @@ class Request:
         else:
             raise FileNotFoundError
 
-    def generate_processbar(self, num):
-        self.processbar_window = tk.Toplevel()
-        self.processbar_window.title("下載進度")
-        self.processbar_window.geometry('300x100')
-        self.dl_file_name = tk.StringVar()
-        self.dl_file_name.set('')
-        name_label = tk.Label(self.processbar_window, textvariable=self.dl_file_name)
+    @staticmethod
+    def generate_processbar(num) -> [tk.Toplevel, Progressbar, tk.StringVar]:
+        processbar_window = tk.Toplevel()
+        processbar_window.title("下載進度")
+        processbar_window.geometry('300x100')
+        dl_file_name = tk.StringVar()
+        dl_file_name.set('')
+        name_label = tk.Label(processbar_window, textvariable=dl_file_name)
         name_label.pack()
-        self.processbar = Progressbar(self.processbar_window, maximum=num, length=200)
-        self.processbar.pack()
-        self.processbar_window.lift()
+        processbar = Progressbar(processbar_window, maximum=num, length=200)
+        processbar.pack()
+        processbar_window.lift()
+        return processbar_window, processbar, dl_file_name
 
     def download_course_ach(self):
-        if self.course_ach_list == {}:
+        async def dl(url, file, index):
+            nonlocal loop, bar, dl_file_name
+            response = await loop.run_in_executor(executor=None,
+                                                  func=lambda: self.session_requests.get(url, headers=self.headers))
+            byte_io = io.BytesIO(response.content)
+            name: str = file["dn"]
+            dl_file_name.set(name)
+            path = self.main_path + self.tem_path_list[1]
+            if name in name_dict.keys():
+                name_dict[name] += 1
+                n = name.split('.')
+                n[0: -1] = [''.join(n[0: -1])]
+                path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                rename_course_ach_list[index]["dn"] = f'{n[0]} ({name_dict[name]}).{n[1]}'
+            else:
+                name_dict[name] = 1
+                path += f'/{name}'
+            with open(path, 'wb') as f:
+                f.write(byte_io.getvalue())
+            bar['value'] += 1
+            bar.update()
+
+        if self.course_ach_list is []:
             raise FileNotFoundError
         else:
             self.mkdir(self.main_path + self.tem_path_list[1])
             name_dict = {}
             rename_course_ach_list = self.course_ach_list
-            self.generate_processbar(len(rename_course_ach_list))
+            window, bar, dl_file_name = self.generate_processbar(len(rename_course_ach_list))
+            loop = asyncio.new_event_loop()
+            tasks = []
             for i, j in zip(self.course_ach_list, range(len(rename_course_ach_list))):
-                uid = i["dp"]
-                url = f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={uid}'
+                tasks.append(loop.create_task(dl(f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={i["dp"]}', i, j)))
+                """
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i["dn"]
@@ -337,22 +360,47 @@ class Request:
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
                 self.processbar['value'] = j + 1
-                self.processbar.update()
+                self.processbar.update()"""
+            loop.run_until_complete(asyncio.wait(tasks))
             self.replace_folder(1)
             self.rewrite_text(1, rename_course_ach_list)
-            self.processbar_window.destroy()
+            window.destroy()
 
     def download_per(self):
+        async def dl(url, file, index):
+            nonlocal loop, bar, dl_file_name
+            response = await loop.run_in_executor(executor=None,
+                                                  func=lambda: self.session_requests.get(url, headers=self.headers))
+            byte_io = io.BytesIO(response.content)
+            name: str = file['certiName']
+            dl_file_name.set(name)
+            path = self.main_path + self.tem_path_list[2]
+            if name in name_dict.keys():
+                name_dict[name] += 1
+                n = name.split('.')
+                n[0: -1] = [''.join(n[0: -1])]
+                path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
+                rename_per_list[index]['certiName'] = f'{n[0]} ({name_dict[name]}).{n[1]}'
+            else:
+                name_dict[name] = 1
+                path += f"/{name}"
+            with open(path, 'wb') as f:
+                f.write(byte_io.getvalue())
+            bar['value'] += 1
+            bar.update()
+
         if self.per_list == {}:
             raise FileNotFoundError
         else:
             self.mkdir(self.main_path + self.tem_path_list[2])
             name_dict = {}
             rename_per_list = self.per_list
-            self.generate_processbar(len(rename_per_list))
+            window, bar, dl_file_name = self.generate_processbar(len(rename_per_list))
+            loop = asyncio.new_event_loop()
+            tasks = []
             for i, j in zip(self.per_list, range(len(rename_per_list))):
-                uid = i['df1']
-                url = f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={uid}'
+                tasks.append(loop.create_task(dl(f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={i['df1']}', i, j)))
+                """
                 response = self.session_requests.get(url, headers=self.headers)
                 byte_io = io.BytesIO(response.content)
                 name: str = i['certiName']
@@ -370,11 +418,12 @@ class Request:
                     path += f"/{name}"
                 with open(path, 'wb') as f:
                     f.write(byte_io.getvalue())
-                self.processbar['value'] = j + 1
-                self.processbar.update()
+                self.processbar['value'] += 1
+                self.processbar.update()"""
+            loop.run_until_complete(asyncio.wait(tasks))
             self.replace_folder(2)
             self.rewrite_text(2, rename_per_list)
-            self.processbar_window.destroy()
+            window.destroy()
 
     def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
         try:
@@ -434,13 +483,18 @@ class Request:
 
 
 if __name__ == '__main__':
-    loginId = str(input('請輸入帳號'))
-    password = str(input('請輸入密碼'))
+    # loginId = str(input('請輸入帳號'))
+    # password = str(input('請輸入密碼'))
     Data = {
         'city': '12',
         'schNo': '210305.國立台南第一高級中學',
-        'loginId': loginId,
-        'password': password,
+        'loginId': '010294',
+        'password': 's125579628',
         'validateCode': '',
         'formToken': ''
     }
+    a = Request()
+    a.data = Data
+    a.login(2)
+    a.generate_processbar(10)
+    a.generate_processbar(20)
