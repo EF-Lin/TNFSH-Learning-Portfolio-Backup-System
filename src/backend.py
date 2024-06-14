@@ -95,6 +95,20 @@ class Request:
         if not f:
             open(path, 'w').close()
 
+    @staticmethod
+    def generate_processbar(num) -> [tk.Toplevel, Progressbar, tk.StringVar]:
+        processbar_window = tk.Toplevel()
+        processbar_window.title("下載進度")
+        processbar_window.geometry('300x100')
+        dl_file_name = tk.StringVar()
+        dl_file_name.set('')
+        name_label = tk.Label(processbar_window, textvariable=dl_file_name)
+        name_label.pack()
+        processbar = Progressbar(processbar_window, maximum=num, length=200)
+        processbar.pack()
+        processbar_window.lift()
+        return processbar_window, processbar, dl_file_name
+
     def init_folders(self):
         self.mkdir(self.main_path)
         for i in self.path_list[0:3]:
@@ -115,6 +129,21 @@ class Request:
             else:
                 pass
 
+    def __rewrite_text(self, i: int, file):
+        """
+        if i == 4:
+            path = self.main_path + 'file_list' + self.file_type
+        """
+        self.replace_text(self.main_path + self.path_list[i] * 2 + self.file_type, file)
+
+    def __post_data(self, url: str, data: dict) -> re.models.Response:
+        response = self.session_requests.post(
+            url=url,
+            data=data,
+            headers=self.headers
+        )
+        return response
+
     def login(self, v: int) -> str:
         try:
             return self._req_login(v)
@@ -123,37 +152,20 @@ class Request:
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
-    def announcement(self) -> [bool, list, list, list] or [bool, str]:
-        try:
-            return True, self.req_announcement()
-        except re.exceptions.ConnectionError:
-            return False, 'Please check your internet.'
-        except AttributeError:
-            return False, 'Please login first.'
-        except Exception as ex:
-            return False, f'Unknown Error.\n{str(ex)}'
-
-    def backup_all(self) -> list:
-        message_list = []
-        for i in range(3):
-            s = self.backup(i)
-            if s == 'S':
-                pass
-            else:
-                message_list.append(s)
-        return message_list
-
     def backup(self, i: int) -> str:
         name = ['cadre experiment', 'course achievements', 'performers']
         try:
-            if i == 0:
-                self.cadre_experience()
-            elif i == 1:
-                self.course_achievement()
-                self.download_course_ach()
-            elif i == 2:
-                self.performers()
-                self.download_per()
+            match i:
+                case 0:
+                    self.cadre_experience()
+                case 1:
+                    self.course_achievement()
+                    self.download_course_ach()
+                case 2:
+                    self.performers()
+                    self.download_per()
+                case _:
+                    return 'Error input.'
             self.update_time()
             return 'S'
         except json.decoder.JSONDecodeError:
@@ -167,37 +179,47 @@ class Request:
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
 
+    def backup_all(self) -> list:
+        message_list = []
+        for i in range(3):
+            s = self.backup(i)
+            0 if s == 'S' else message_list.append(s)
+        return message_list
+
+    def announcement(self) -> [bool, list, list, list] or [bool, str]:
+        try:
+            return True, self.req_announcement()
+        except re.exceptions.ConnectionError:
+            return False, 'Please check your internet.'
+        except AttributeError:
+            return False, 'Please login first.'
+        except Exception as ex:
+            return False, f'Unknown Error.\n{str(ex)}'
+
     def get_validate_photo(self):
         try:
             from PIL import ImageTk
-            response = self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do', {'d': 1})
-            tk_img = ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
-            return tk_img
+            response = self.__post_data(url='https://epf-mlife.k12ea.gov.tw/validate.do', data={'d': 1})
+            return ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
         except re.exceptions.ConnectionError:
             return 'Please check your internet.'
 
     def _req_login(self, v: int):
         def ocr() -> str:
             import ddddocr
-            OCR = ddddocr.DdddOcr(show_ad=False, beta=True)
+            orc = ddddocr.DdddOcr(show_ad=False, beta=True)
             # get validate photo
-            return OCR.classification(base64.b64decode(self.session_requests.post('https://epf-mlife.k12ea.gov.tw/validate.do',
-                                                                                  {'d': 1}).text.split('\"')[3])).lower()
+            return orc.classification(base64.b64decode(self.__post_data(url='https://epf-mlife.k12ea.gov.tw/validate.do',
+                                                                        data={'d': 1}).text.split('\"')[3])).lower()
 
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # request
         response = self.session_requests.get(url)
         soup = bs4.BeautifulSoup(response.text, 'html.parser')
         # get token
-        token = soup.find('input', {'name': 'formToken'})['value']
-        self.data['formToken'] = token
-        if v == 2:
-            self.data['validateCode'] = ocr()
-        response = self.session_requests.post(
-            url=url,
-            data=self.data,
-            headers=self.headers
-        )
+        self.data['formToken'] = soup.find('input', {'name': 'formToken'})['value']
+        self.data['validateCode'] = ocr() if v == 2 else 0
+        response = self.__post_data(url=url, data=self.data)
         html = str(response.text)
         a = html.find('帳號或密碼錯誤')
         b = html.find('驗證碼輸入錯誤')
@@ -216,28 +238,13 @@ class Request:
         else:
             return 'ServiceError'
 
-    def rewrite_text(self, i: int, file):
-        if i == 4:
-            path = self.main_path + 'file_list' + self.file_type
-        else:
-            path = self.main_path + self.path_list[i] * 2 + self.file_type
-        self.replace_text(path, file)
-
-    def post_data(self, url: str, data: dict) -> re.models.Response:
-        response = self.session_requests.post(
-            url=url,
-            data=data,
-            headers=self.headers
-        )
-        return response
-
-    def _req_file_list(self):
+    def __req_file_list(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentFiles.do'
         data = {
             'page': '1',
             'session_key': self.key
         }
-        self.post_data(url, data)
+        self.__post_data(url, data)
 
     def cadre_experience(self):
         url = 'https://epf-mlife.k12ea.gov.tw/serviceExperienceQuery.do'
@@ -245,8 +252,8 @@ class Request:
             'page': None,
             'session_key': self.key
         }
-        self.cadre_ex_list = (json.loads(self.post_data(url, data).text))['dataRows']
-        self.rewrite_text(0, self.cadre_ex_list)
+        self.cadre_ex_list = (json.loads(self.__post_data(url, data).text))['dataRows']
+        self.__rewrite_text(0, self.cadre_ex_list)
 
     def course_achievement(self):
         url = 'https://epf-mlife.k12ea.gov.tw/courseEditQuery.do'
@@ -256,16 +263,16 @@ class Request:
             'syears': 'Y',
             'session_key': self.key
         }
-        self.course_ach_list = (json.loads(self.post_data(url, data).text))['dataRows']
+        self.course_ach_list = (json.loads(self.__post_data(url, data).text))['dataRows']
 
-    def _performers_all(self):
+    def __performers_all(self):
         url = 'https://epf-mlife.k12ea.gov.tw/listStudentPerformance.do'
         data = {
             'type': 'upload',
             'syear': '全部',
             'session_key': self.key
         }
-        return json.loads(self.post_data(url, data).text)["dataRows"]
+        return json.loads(self.__post_data(url, data).text)["dataRows"]
 
     def performers(self):
         data = {
@@ -275,15 +282,15 @@ class Request:
         tem_list = []
         for i in range(1, 11, 1):
             url = f'https://epf-mlife.k12ea.gov.tw/performance{i}Query.do'
-            tem_list.extend(json.loads(self.post_data(url, data).text)["dataRows"])
+            tem_list.extend(json.loads(self.__post_data(url, data).text)["dataRows"])
             for j in tem_list:
                 data2 = {
                     'id': j['id'],
                     'session_key': self.key
                 }
-                self.per_list.extend(json.loads(self.post_data(url, data2).text)["dataRows"])
+                self.per_list.extend(json.loads(self.__post_data(url, data2).text)["dataRows"])
 
-    def replace_folder(self, i):
+    def __replace_folder(self, i):
         tem_path = self.main_path + self.tem_path_list[i]
         path = self.main_path + self.path_list[i]
         f = os.path.exists(tem_path)
@@ -293,20 +300,6 @@ class Request:
             os.rename(tem_path, path)
         else:
             raise FileNotFoundError
-
-    @staticmethod
-    def generate_processbar(num) -> [tk.Toplevel, Progressbar, tk.StringVar]:
-        processbar_window = tk.Toplevel()
-        processbar_window.title("下載進度")
-        processbar_window.geometry('300x100')
-        dl_file_name = tk.StringVar()
-        dl_file_name.set('')
-        name_label = tk.Label(processbar_window, textvariable=dl_file_name)
-        name_label.pack()
-        processbar = Progressbar(processbar_window, maximum=num, length=200)
-        processbar.pack()
-        processbar_window.lift()
-        return processbar_window, processbar, dl_file_name
 
     def download_course_ach(self):
         async def dl(url, file, index):
@@ -342,28 +335,9 @@ class Request:
             tasks = []
             for i, j in zip(self.course_ach_list, range(len(rename_course_ach_list))):
                 tasks.append(loop.create_task(dl(f'https://epf-mlife.k12ea.gov.tw/downloadCourseFile.do?path={i["dp"]}', i, j)))
-                """
-                response = self.session_requests.get(url, headers=self.headers)
-                byte_io = io.BytesIO(response.content)
-                name: str = i["dn"]
-                self.dl_file_name.set(name)
-                path = self.main_path + self.tem_path_list[1]
-                if name in name_dict.keys():
-                    name_dict[name] += 1
-                    n = name.split('.')
-                    n[0: -1] = [''.join(n[0: -1])]
-                    path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
-                    rename_course_ach_list[j]["dn"] = f'{n[0]} ({name_dict[name]}).{n[1]}'
-                else:
-                    name_dict[name] = 1
-                    path += f'/{name}'
-                with open(path, 'wb') as f:
-                    f.write(byte_io.getvalue())
-                self.processbar['value'] = j + 1
-                self.processbar.update()"""
             loop.run_until_complete(asyncio.wait(tasks))
-            self.replace_folder(1)
-            self.rewrite_text(1, rename_course_ach_list)
+            self.__replace_folder(1)
+            self.__rewrite_text(1, rename_course_ach_list)
             window.destroy()
 
     def download_per(self):
@@ -400,29 +374,9 @@ class Request:
             tasks = []
             for i, j in zip(self.per_list, range(len(rename_per_list))):
                 tasks.append(loop.create_task(dl(f'https://epf-mlife.k12ea.gov.tw/performanceFile.do?path={i['df1']}', i, j)))
-                """
-                response = self.session_requests.get(url, headers=self.headers)
-                byte_io = io.BytesIO(response.content)
-                name: str = i['certiName']
-                self.dl_file_name.set(name)
-                path = self.main_path + self.tem_path_list[2]
-                if name in name_dict.keys():
-                    name_dict[name] += 1
-                    n = name.split('.')
-                    n[0: -1] = [''.join(n[0: -1])]
-                    path += f"/{n[0]} ({name_dict[name]}).{n[1]}"
-                    rename = True
-                    rename_per_list[j]['certiName'] = f'{n[0]} ({name_dict[name]}).{n[1]}'
-                else:
-                    name_dict[name] = 1
-                    path += f"/{name}"
-                with open(path, 'wb') as f:
-                    f.write(byte_io.getvalue())
-                self.processbar['value'] += 1
-                self.processbar.update()"""
             loop.run_until_complete(asyncio.wait(tasks))
-            self.replace_folder(2)
-            self.rewrite_text(2, rename_per_list)
+            self.__replace_folder(2)
+            self.__rewrite_text(2, rename_per_list)
             window.destroy()
 
     def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
@@ -452,7 +406,7 @@ class Request:
             'session_key': self.key,
             'model': '2'
         }
-        response = self.post_data(url, data)
+        response = self.__post_data(url, data)
         soup = bs4.BeautifulSoup(response.text, 'html.parser')
         s = str(soup.find(class_='tab-pane fade in active').text).split('\n')
         announcement = []
@@ -478,8 +432,8 @@ class Request:
         return [announcement, date, deadline]
 
     def update_time(self):
-        self.replace_text(f'{self.main_path}{self.path_list[4]}{self.file_type}',
-                          f'{datetime.now().year - 1911}/{datetime.now().strftime('%m/%d %H:%M')}')
+        self.replace_text(path=f'{self.main_path}{self.path_list[4]}{self.file_type}',
+                          file=f'{datetime.now().year - 1911}/{datetime.now().strftime('%m/%d %H:%M')}')
 
 
 if __name__ == '__main__':
@@ -488,13 +442,8 @@ if __name__ == '__main__':
     Data = {
         'city': '12',
         'schNo': '210305.國立台南第一高級中學',
-        'loginId': '010294',
-        'password': 's125579628',
+        'loginId': '',
+        'password': '',
         'validateCode': '',
         'formToken': ''
     }
-    a = Request()
-    a.data = Data
-    a.login(2)
-    a.generate_processbar(10)
-    a.generate_processbar(20)
