@@ -6,7 +6,7 @@ import base64
 import json
 import os
 import shutil
-from PIL import Image
+from PIL import Image, ImageFile
 from datetime import datetime
 import tkinter as tk
 from tkinter.ttk import Progressbar
@@ -381,6 +381,7 @@ class Request:
 
     def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
         try:
+            ImageFile.LOAD_TRUNCATED_IMAGES = True
             img = [
                 Image.open(f)
                 for f in files
@@ -388,6 +389,12 @@ class Request:
             for i in range(len(img)):
                 w, h = img[i].size
                 img[i].thumbnail((int(w * size[i] / 10), int(h * size[i] / 10)))
+            img[0] = img[0].transpose(Image.ROTATE_180)
+            """
+            r = [Image.ROTATE_90, Image.ROTATE_90]
+            for i in range(0, 2):
+               img[i] = img[i].transpose(r[i])
+            """
             pdf_path = os.path.normpath(self.main_path + f"/{name}.pdf")
             img[0].save(
                 pdf_path, "PDF",
@@ -398,6 +405,7 @@ class Request:
             return True
         except Exception as ex:
             # IOError or Exception
+            print(ex)
             return str(ex)
 
     def req_announcement(self) -> [list, list, list]:
