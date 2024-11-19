@@ -279,8 +279,9 @@ class Main_interface(Request):
         backup_button = tk.Button(self.selection_window, text='備份', font=self.font_button,
                                   command=backup_all_and_show_message, width=w, height=h)
         backup_button.grid(row=2, column=0, sticky='e')
+        c = Covert()
         covert_img_button = tk.Button(self.selection_window, text='轉檔工具', font=self.font_button,
-                                      command=Covert.show_covert_img, width=w, height=h)
+                                      command=c.show_covert_img, width=w, height=h)
         covert_img_button.grid(row=2, column=1, sticky='w')
         relogin_button = tk.Button(self.selection_window, text='重新登入', font=self.font_button,
                                    command=reset, width=w, height=h)

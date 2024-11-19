@@ -405,7 +405,7 @@ class Request:
             return True
         except Exception as ex:
             # IOError or Exception
-            print(ex)
+            # print(ex)
             return str(ex)
 
     def req_announcement(self) -> [list, list, list]:
