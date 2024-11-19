@@ -218,7 +218,8 @@ class Request:
         soup = bs4.BeautifulSoup(response.text, 'html.parser')
         # get token
         self.data['formToken'] = soup.find('input', {'name': 'formToken'})['value']
-        self.data['validateCode'] = ocr() if v == 2 else 0
+        if v == 2:
+            self.data['validateCode'] = ocr()
         response = self.__post_data(url=url, data=self.data)
         html = str(response.text)
         a = html.find('帳號或密碼錯誤')
