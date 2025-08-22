@@ -1,5 +1,5 @@
-from backend import Request
-from icon import icon
+from src.backend import Request
+from src.icon import icon
 from dataclasses import dataclass
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
@@ -7,6 +7,7 @@ import tkinter.ttk as ttk
 import pyperclip
 import os
 import base64
+from typing import Optional
 
 
 def add_icon(window: tk.Tk):
@@ -34,9 +35,9 @@ class Main_interface(Request):
             'formToken': ''
         }
         # vars
-        self.login_window: tk.Tk() = None
-        self.selection_window: tk.Tk() = None
-        self.if_login_str: tk.StringVar() = None
+        self.login_window: Optional[tk.Tk] = None
+        self.selection_window: Optional[tk.Tk] = None
+        self.if_login_str: Optional[tk.StringVar] = None
         self.if_login = False
         # user info
         self.user_info_path = self.main_path + self.path_list[3] + self.file_type
@@ -109,7 +110,7 @@ class Main_interface(Request):
         }
         self.replace_text(self.user_info_path, user_info)
 
-    def check_user_data(self) -> bool or None:
+    def check_user_data(self) -> bool | None:
         f = os.path.exists(self.user_info_path)
         if not f:
             self.show_login()
@@ -209,7 +210,7 @@ class Main_interface(Request):
             else:
                 pass
 
-    def load_data(self, i: int, repeater: int = 2) -> list or str:
+    def load_data(self, i: int, repeater: int = 2) -> list | str:
         try:
             path = self.main_path + self.path_list[i] * repeater + self.file_type
             with open(path, 'r', encoding="utf-8") as f:
@@ -416,6 +417,7 @@ class Covert(Request):
     def __post_init__(self):
         self.files: tuple = ()
         self.img_size: list = []
+        self.main_path = os.path.normpath("files")
 
     def __str__(self):
         return 'This is a tool which can covert images to pdf.'

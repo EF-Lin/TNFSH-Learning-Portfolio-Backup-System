@@ -1,7 +1,7 @@
 import asyncio
 import io
 import bs4
-import requests as re
+import requests
 import base64
 import json
 import os
@@ -10,6 +10,7 @@ from PIL import Image, ImageFile
 from datetime import datetime
 import tkinter as tk
 from tkinter.ttk import Progressbar
+from typing import Tuple
 
 
 class Request:
@@ -73,7 +74,7 @@ class Request:
             'formToken': ''
         }
         # create session
-        self.session_requests = re.session()
+        self.session_requests = requests.session()
         # self.login()
 
     def __str__(self) -> str:
@@ -96,7 +97,7 @@ class Request:
             open(path, 'w').close()
 
     @staticmethod
-    def generate_processbar(num) -> [tk.Toplevel, Progressbar, tk.StringVar]:
+    def generate_processbar(num) -> Tuple[tk.Toplevel, Progressbar, tk.StringVar]:
         processbar_window = tk.Toplevel()
         processbar_window.title("下載進度")
         processbar_window.geometry('300x100')
@@ -136,7 +137,7 @@ class Request:
         """
         self.replace_text(self.main_path + self.path_list[i] * 2 + self.file_type, file)
 
-    def __post_data(self, url: str, data: dict) -> re.models.Response:
+    def __post_data(self, url: str, data: dict) -> requests.models.Response:
         response = self.session_requests.post(
             url=url,
             data=data,
@@ -147,7 +148,7 @@ class Request:
     def login(self, v: int) -> str:
         try:
             return self._req_login(v)
-        except re.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError:
             return 'ConnectionError'
         except Exception as ex:
             return f'Unknown Error.\n{str(ex)}\n'
@@ -172,7 +173,7 @@ class Request:
             return f"Backup {name[i]} failed, please try again."
         except FileNotFoundError:
             return f"Backup {name[i]} data list failed"
-        except re.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError:
             return f'Backup {name[i]} failed, please check your internet.'
         except AttributeError:
             return 'Please login first.'
@@ -186,10 +187,10 @@ class Request:
             0 if s == 'S' else message_list.append(s)
         return message_list
 
-    def announcement(self) -> [bool, list, list, list] or [bool, str]:
+    def announcement(self) -> Tuple[bool, list, list, list] | Tuple[bool, str]:
         try:
             return True, self.req_announcement()
-        except re.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError:
             return False, 'Please check your internet.'
         except AttributeError:
             return False, 'Please login first.'
@@ -201,7 +202,7 @@ class Request:
             from PIL import ImageTk
             response = self.__post_data(url='https://epf-mlife.k12ea.gov.tw/validate.do', data={'d': 1})
             return ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
-        except re.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError:
             return 'Please check your internet.'
 
     def _req_login(self, v: int):
@@ -380,7 +381,7 @@ class Request:
             self.__rewrite_text(2, rename_per_list)
             window.destroy()
 
-    def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool or str:
+    def covert_image_to_pdf(self, files: tuple, name: str, size: list) -> bool | str:
         try:
             ImageFile.LOAD_TRUNCATED_IMAGES = True
             img = [
@@ -409,7 +410,7 @@ class Request:
             # print(ex)
             return str(ex)
 
-    def req_announcement(self) -> [list, list, list]:
+    def req_announcement(self) -> Tuple[list, list, list]:
         url = 'https://epf-mlife.k12ea.gov.tw/student.do'
         data = {
             'session_key': self.key,

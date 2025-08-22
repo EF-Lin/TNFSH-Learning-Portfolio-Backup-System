@@ -1,6 +1,6 @@
-from frontend import Main_interface
+from src.frontend import Main_interface
 
 if __name__ == '__main__':
-    version = 1
+    version = 2
     main = Main_interface(version)
     main.check_user_data()

@@ -1,0 +1,14 @@
+t.py
+test.py
+
+/refer/
+/src/files/
+/files/
+*.pyc
+*.spec
+*.ico
+*.exe
+
+/src/build/
+/src/dist/
+package.bat
