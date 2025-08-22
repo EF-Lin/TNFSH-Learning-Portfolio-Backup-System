@@ -45,7 +45,7 @@ class Main_interface(Request):
         # self.check_user_data()
 
     def __str__(self) -> str:
-        return 'This is the main interface'
+        return "This is the main interface"
 
     def show_login(self):
         def login():

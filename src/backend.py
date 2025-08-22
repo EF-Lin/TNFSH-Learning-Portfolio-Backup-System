@@ -78,7 +78,7 @@ class Request:
         # self.login()
 
     def __str__(self) -> str:
-        return 'This is a spider.'
+        return "This is a spider."
 
     @staticmethod
     def mkdir(path):
@@ -100,7 +100,7 @@ class Request:
     def generate_processbar(num) -> Tuple[tk.Toplevel, Progressbar, tk.StringVar]:
         processbar_window = tk.Toplevel()
         processbar_window.title("下載進度")
-        processbar_window.geometry('300x100')
+        processbar_window.geometry("300x100")
         dl_file_name = tk.StringVar()
         dl_file_name.set('')
         name_label = tk.Label(processbar_window, textvariable=dl_file_name)
@@ -130,31 +130,31 @@ class Request:
             else:
                 pass
 
+    def test(self, *args):
+        self.__req_login(args[0])
+
     def __rewrite_text(self, i: int, file):
-        """
-        if i == 4:
-            path = self.main_path + 'file_list' + self.file_type
-        """
         self.replace_text(self.main_path + self.path_list[i] * 2 + self.file_type, file)
 
     def __post_data(self, url: str, data: dict) -> requests.models.Response:
         response = self.session_requests.post(
             url=url,
             data=data,
-            headers=self.headers
+            headers=self.headers,
+            verify=False
         )
         return response
 
     def login(self, v: int) -> str:
         try:
-            return self._req_login(v)
+            return self.__req_login(v)
         except requests.exceptions.ConnectionError:
-            return 'ConnectionError'
+            return "ConnectionError"
         except Exception as ex:
-            return f'Unknown Error.\n{str(ex)}\n'
+            return f"Unknown Error.\n{str(ex)}\n"
 
     def backup(self, i: int) -> str:
-        name = ['cadre experiment', 'course achievements', 'performers']
+        name = ["cadre experiment", "course achievements", "performers"]
         try:
             match i:
                 case 0:
@@ -166,7 +166,7 @@ class Request:
                     self.performers()
                     self.download_per()
                 case _:
-                    return 'Error input.'
+                    return "Error input."
             self.update_time()
             return 'S'
         except json.decoder.JSONDecodeError:
@@ -174,11 +174,11 @@ class Request:
         except FileNotFoundError:
             return f"Backup {name[i]} data list failed"
         except requests.exceptions.ConnectionError:
-            return f'Backup {name[i]} failed, please check your internet.'
+            return f"Backup {name[i]} failed, please check your internet."
         except AttributeError:
-            return 'Please login first.'
+            return "Please login first."
         except Exception as ex:
-            return f'Unknown Error.\n{str(ex)}\n'
+            return f"Unknown Error.\n{str(ex)}\n"
 
     def backup_all(self) -> list:
         message_list = []
@@ -200,18 +200,22 @@ class Request:
     def get_validate_photo(self):
         try:
             from PIL import ImageTk
-            response = self.__post_data(url='https://epf-mlife.k12ea.gov.tw/validate.do', data={'d': 1})
+            response = self.__post_data(url="https://epf-mlife.k12ea.gov.tw/validate.do", data={'d': 1})
             return ImageTk.PhotoImage(Image.open(io.BytesIO(base64.b64decode(response.text.split('\"')[3]))))
         except requests.exceptions.ConnectionError:
-            return 'Please check your internet.'
+            return "Please check your internet."
+        except Exception as ex:
+            return str(ex)
 
-    def _req_login(self, v: int):
+    def __req_login(self, v: int):
         def ocr() -> str:
             import ddddocr
-            orc = ddddocr.DdddOcr(show_ad=False, beta=True)
+            orc = ddddocr.DdddOcr()
             # get validate photo
-            return orc.classification(base64.b64decode(self.__post_data(url='https://epf-mlife.k12ea.gov.tw/validate.do',
-                                                                        data={'d': 1}).text.split('\"')[3])).lower()
+            return orc.classification(base64.b64decode(self.__post_data(
+                url='https://epf-mlife.k12ea.gov.tw/validate.do',
+                data={'d': 1}
+                ).text.split('\"')[3])).lower()
 
         url = 'https://epf-mlife.k12ea.gov.tw/Login2.do'
         # request
